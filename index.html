@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindScribe & Triage AI — Analisis Voice Note Krisis Malam Hari & Panduan Wawancara Psikiater</title>
+  <meta name="description" content="Platform AI psikiatri berbasis bukti: Analisis pesan suara (Voice Note) krisis kecemasan malam hari via WhatsApp, panduan deep dive clinical interview untuk psikiater (Sp.KJ), dan 100% bebas rekaman di ruang konsultasi. Kepatuhan UU PDP No. 27/2022 & SATUSEHAT.">
+  <meta name="keywords" content="MindScribe, AI Psikiatri, Analisis Voice Note, Triage WhatsApp, Deep Dive Interview, Sp.KJ, UU PDP, SATUSEHAT, Kemenkes">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/design-tokens.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+  <!-- Ambient Glow Effects -->
+  <div class="ambient-glow-wrapper" aria-hidden="true">
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+    <div class="glow-orb glow-orb-3"></div>
+  </div>
+
+  <!-- Top Emergency Triage Hotline Banner -->
+  <div class="emergency-banner" role="alert">
+    <span class="pulse-dot"></span>
+    <span><strong>Krisis Darurat Psikiatri 24 Jam:</strong> Jika Anda atau kerabat membutuhkan bantuan segera, hubungi <strong>Hotline Kemenkes RI <a href="tel:119">119 ext 8</a></strong> (Bebas Pulsa) atau kunjungi IGD Rumah Sakit Jiwa terdekat.</span>
+  </div>
+
+  <!-- Main Navigation Bar -->
+  <nav class="navbar" id="main-navbar">
+    <div class="nav-container">
+      <a href="#" class="brand-logo" aria-label="MindScribe & Triage AI Beranda">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12"/>
+            <path d="M12 6v6l4 2"/>
+            <path d="M3 3l18 18" stroke="rgba(255,255,255,0.2)"/>
+            <path d="M8 12h.01M16 12h.01"/>
+            <path d="M12 16c-2 0-3-1-3-1"/>
+          </svg>
+        </div>
+        <div class="brand-text-badge">
+          <div class="brand-title">MindScribe <span class="highlight">& Triage AI</span></div>
+          <div class="brand-subtitle">Nocturnal Triage & Psychiatric Interview Guide</div>
+        </div>
+      </a>
+
+      <!-- Cleaned Navigation Links -->
+      <ul class="nav-links">
+        <li><a href="#vn-showcase" class="nav-link">Analisis VN & Panduan Sp.KJ</a></li>
+        <li><a href="#wa-showcase" class="nav-link">Triage WhatsApp</a></li>
+        <li><a href="#compliance-section" class="nav-link">UU PDP & SATUSEHAT</a></li>
+        <li><a href="#roi-calculator" class="nav-link">Kalkulator Waktu</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle-btn" id="theme-toggle-btn" title="Ganti Tema (Gelap/Terang)" aria-label="Ganti Tema">
+          <svg id="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg id="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <!-- PRD Distinct Portals Separation Buttons -->
+        <button class="btn-portal-doctor trigger-doctor-portal" id="nav-btn-doctor" title="Buka Portal Khusus Dokter Spesialis Kedokteran Jiwa">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>
+          Portal Dokter (Sp.KJ)
+        </button>
+
+        <button class="btn-portal-admin trigger-admin-portal" id="nav-btn-admin" title="Buka Portal Administrasi & Kasir Klinik">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Portal Admin Faskes
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==========================================================================
+       Hero Section
+       ========================================================================== -->
+  <section class="hero-section" id="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="badge-pill-pulse">
+          <span class="dot"></span>
+          <span>Analisis Voice Note Krisis Malam Hari & Ruang Konsultasi Bebas Rekaman</span>
+        </div>
+
+        <h1 class="hero-title">
+          Analisis AI Voice Note Krisis Malam Hari, <span class="gradient-text">Panduan Deep Dive Interview untuk Sp.KJ.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Di ruang praktek, psikiater mengambil keputusan klinis lebih cepat dari siapa pun. <strong>Tanpa perlu merekam ruang konsultasi</strong>, MindScribe menganalisis <em>Voice Note</em> krisis cemas malam hari pasien via WhatsApp terenkripsi untuk membekali Sp.KJ dengan <strong>bukti somatik objektif & panduan wawancara mendalam</strong> esok paginya.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#vn-showcase" class="btn btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            Lihat Analisis VN & Panduan Interview
+          </a>
+          <a href="#wa-showcase" class="btn btn-secondary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            Gerbang Triage WhatsApp (01:30 AM)
+          </a>
+        </div>
+
+        <!-- Key Metrics Ribbon -->
+        <div class="metrics-ribbon">
+          <div class="metric-card">
+            <div class="metric-value">0 Rekaman</div>
+            <div class="metric-label">Ruang Konsultasi 100% Privat</div>
+            <div class="metric-sub">Tidak ada mikrofon/penyadap di ruangan</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">&lt; 10 Detik</div>
+            <div class="metric-label">Analisis Voice Note Semalam</div>
+            <div class="metric-sub">Ekstraksi somatik & ruminasi otomatis</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">Deep Dive</div>
+            <div class="metric-label">Panduan Wawancara Sp.KJ</div>
+            <div class="metric-sub">Pertanyaan terarah berbasis bukti VN</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">&gt; 60%</div>
+            <div class="metric-label">Konversi Krisis Malam Hari</div>
+            <div class="metric-sub">Pasien panik terjadwal ke sesi tatap muka</div>
+          </div>
+        </div>
+
+        <!-- Compliance Badges -->
+        <div class="compliance-bar">
+          <div class="compliance-badge-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Kepatuhan UU PDP No. 27/2022
+          </div>
+          <div class="compliance-badge-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Standar SATUSEHAT Kemenkes RI (HL7 FHIR)
+          </div>
+          <div class="compliance-badge-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Kerahasiaan Medis Tanpa Rekaman di Ruangan
+          </div>
+          <div class="compliance-badge-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            Auto-Purge WhatsApp &lt; 60s
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Interactive Showcase 1: Nocturnal Voice Note Analyzer & Deep Dive Guide
+       ========================================================================== -->
+  <section class="scribe-section" id="vn-showcase">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Inovasi Alur Kerja Psikiatri</span>
+        <h2 class="section-title">
+          Analisis Voice Note Semalam & <span class="highlight">Panduan Wawancara Tatap Muka</span>
+        </h2>
+        <p class="section-desc">
+          Saat pasien panik di jam 01.30 malam, rekaman suaranya menyimpan indikator afek dan gejala murni. MindScribe menganalisis rekaman suara tersebut dan menyusun <strong>panduan investigasi terarah</strong> bagi dokter spesialis kedokteran jiwa untuk digali saat tatap muka esok paginya.
+        </p>
+      </div>
+
+      <div class="scribe-showcase-card">
+        <!-- Showcase Header Bar -->
+        <div class="scribe-header-bar">
+          <div class="patient-brief-info">
+            <div class="patient-badge-status">
+              🌙 Voice Note Masuk via WhatsApp: Pukul 01:32 WIB &bull; Pasien: Rian (27 thn)
+            </div>
+            <div class="overnight-log-pill">
+              Skor Cemas Akut: 8/10 &bull; Palpitasi & Tremor (+)
+            </div>
+          </div>
+          <div style="font-size: 0.84rem; color: var(--text-muted); font-weight: 600;">
+            DPJP: <strong>dr. Hendra, Sp.KJ</strong> &bull; Sesi Konsultasi Offline Pkl 09:00 WIB
+          </div>
+        </div>
+
+        <!-- Voice Note Player Panel -->
+        <div class="audio-player-panel">
+          <button class="audio-play-btn" id="scribe-play-btn" title="Putar/Jeda Voice Note Semalam" aria-label="Putar VN Pasien">
+            <svg id="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg id="pause-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+
+          <div class="waveform-container">
+            <div class="waveform-meta">
+              <span>Rekaman Voice Note WhatsApp Pasien Saat Serangan Cemas</span>
+              <span><span id="time-current">00:14</span> / <span id="time-total">00:42</span></span>
+            </div>
+            <canvas id="waveform-canvas" class="waveform-canvas" title="Klik pada baris gelombang audio untuk melompat ke detik bukti tertentu"></canvas>
+          </div>
+
+          <div class="groq-speed-pill" title="Token kedaluwarsa 60 detik demi privasi">
+            🔒 Token Audio Exp: 60s
+          </div>
+        </div>
+
+        <!-- 2-Column Clinical Workspace -->
+        <div class="scribe-workspace-grid">
+          <!-- Left Column: Synchronized Voice Note Transcript -->
+          <div class="workspace-col workspace-col-transcript">
+            <div class="col-header">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                Transkrip Voice Note (01:32 AM)
+              </h4>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Verbatim Audio Grounding</span>
+            </div>
+
+            <div class="transcript-stream" id="transcript-stream">
+              <div class="transcript-bubble patient" id="vn-seg-1">
+                <div class="bubble-meta"><span class="speaker-tag" style="color: var(--color-teal);">Rian (Pasien via VN)</span><span class="speaker-time">00:05</span></div>
+                <p>Halo admin klinik... maaf saya kirim VN malam-malam pkl 01.30...</p>
+              </div>
+
+              <div class="transcript-bubble patient highlighted" id="vn-seg-2">
+                <div class="bubble-meta"><span class="speaker-tag" style="color: var(--color-teal);">Rian (Pasien via VN)</span><span class="speaker-time">00:14</span></div>
+                <p>Tiba-tiba dada saya berdebar kencang sekali, sesak napas, dan tangan saya gemetar hebat saat mau tidur.</p>
+              </div>
+
+              <div class="transcript-bubble patient" id="vn-seg-3">
+                <div class="bubble-meta"><span class="speaker-tag" style="color: var(--color-teal);">Rian (Pasien via VN)</span><span class="speaker-time">00:26</span></div>
+                <p>Pikiran saya terus berputar kalut mikirin kerjaan besok, takut ada kesalahan fatal yang berujung dipecat.</p>
+              </div>
+
+              <div class="transcript-bubble patient" id="vn-seg-4">
+                <div class="bubble-meta"><span class="speaker-tag" style="color: var(--color-teal);">Rian (Pasien via VN)</span><span class="speaker-time">00:38</span></div>
+                <p>Rasanya mau mati atau ada bahaya besar yang akan menimpa saya... saya butuh ketemu psikiater besok pagi.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: AI Analysis & Doctor Deep Dive Interview Guide -->
+          <div class="workspace-col workspace-col-editor">
+            <div class="col-header">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Hasil Analisis VN & Panduan Sp.KJ
+              </h4>
+              <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">Bebas Rekaman Ruangan</span>
+            </div>
+
+            <div class="tab-switcher">
+              <button class="tab-btn active" data-tab="guide">Panduan Deep Dive Interview</button>
+              <button class="tab-btn" data-tab="draft">Draf Awal Indikator Klinis</button>
+            </div>
+
+            <!-- Tab 1: Deep Dive Interview Guide for Sp.KJ -->
+            <div class="mse-editor-panel" id="guide-view">
+              <!-- Probe 1 -->
+              <div class="clinical-section-card" style="border-left: 4px solid var(--color-teal);">
+                <div class="section-label-row">
+                  <span class="section-label">1. Eksplorasi Gejala Somatik & Eksaserbasi Panik</span>
+                  <button class="verify-timestamp-badge" data-timestamp="00:14" title="Dengar bukti audio VN di detik 00:14">[00:14]</button>
+                </div>
+                <p class="section-content-text" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                  Pertanyaan Panduan untuk dr. Hendra saat Pasien Duduk:
+                </p>
+                <p class="section-content-text">
+                  <em>"Mas Rian, semalam di rekaman suara Anda menyebutkan dada berdebar kencang dan tangan gemetar saat hendak tidur. Berapa menit biasanya sensasi fisik ini berlangsung sebelum mereda? Apakah ada riwayat maag atau konsumsi kafein sebelumnya?"</em>
+                </p>
+              </div>
+
+              <!-- Probe 2 -->
+              <div class="clinical-section-card" style="border-left: 4px solid var(--color-primary);">
+                <div class="section-label-row">
+                  <span class="section-label">2. Identifikasi Pemicu Kognitif & Ruminasi Pekerjaan</span>
+                  <button class="verify-timestamp-badge" data-timestamp="00:26" title="Dengar bukti audio VN di detik 00:26">[00:26]</button>
+                </div>
+                <p class="section-content-text" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                  Pertanyaan Panduan:
+                </p>
+                <p class="section-content-text">
+                  <em>"Semalam pikiran Anda berputar mengenai ketakutan dipecat. Sejak kapan kekhawatiran ini mulai menyita waktu istirahat Anda? Apakah ada evaluasi performa kerja nyata atau ini murni antisipasi kecemasan?"</em>
+                </p>
+              </div>
+
+              <!-- Probe 3 -->
+              <div class="clinical-section-card" style="border-left: 4px solid #10B981;">
+                <div class="section-label-row">
+                  <span class="section-label">3. Klarifikasi Pikiran Kematian vs Ketakutan Panik</span>
+                  <button class="verify-timestamp-badge" data-timestamp="00:38" title="Dengar bukti audio VN di detik 00:38">[00:38]</button>
+                </div>
+                <p class="section-content-text" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                  Pertanyaan Panduan:
+                </p>
+                <p class="section-content-text">
+                  <em>"Anda sempat mengatakan 'rasanya mau mati'. Apakah maksud Anda adalah ketakutan fisik serangan jantung karena panik, atau memang ada dorongan putus asa untuk menyakiti diri sendiri?"</em>
+                </p>
+              </div>
+            </div>
+
+            <!-- Tab 2: Initial Clinical Draft (Hidden by default) -->
+            <div class="mse-editor-panel" id="draft-view" style="display:none;">
+              <div class="clinical-section-card">
+                <span class="section-label">Ringkasan Curhat VN Semalam</span>
+                <p class="section-content-text">Pasien mengalami lonjakan kecemasan akut pkl 01.30 WIB dengan gejala otonom palpitasi, sesak napas, dan tremor tangan. Preokupasi ketakutan masa depan pekerjaan.</p>
+              </div>
+              <div class="clinical-section-card">
+                <span class="section-label">Penapisan Risiko AI</span>
+                <p class="section-content-text">Skor Kecemasan: <strong>8/10</strong> &bull; Risiko Suisidal Akut: <strong>Negatif</strong> (Ungkapan 'mau mati' teridentifikasi sebagai simptom agorafobia/panik, bukan rencana bunuh diri aktif).</p>
+              </div>
+              <div class="clinical-section-card">
+                <span class="section-label">Rekomendasi Penegakan Diagnosis (Untuk Sp.KJ)</span>
+                <p class="section-content-text">Arahkan wawancara ke diagnosis banding <strong>F41.1 (Generalized Anxiety Disorder)</strong> dengan eksaserbasi serangan panik nokturnal. Keputusan medis sepenuhnya ditentukan oleh DPJP.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scribe Action Footer -->
+        <div class="scribe-footer-bar">
+          <div class="zdr-guarantee">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div id="sign-status-text">
+              <strong>Privasi Penuh:</strong> Wawancara di ruang dokter berlangsung tanpa perekam suara. Keputusan klinis dan rekam medis diinput langsung oleh Sp.KJ.
+            </div>
+          </div>
+
+          <button class="btn-sign-approve" id="btn-approve-sign">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+            Sahkan Keputusan Medis (dr. Hendra, Sp.KJ)
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Interactive Showcase 2: WhatsApp Nocturnal Crisis & Booking Gateway
+       ========================================================================== -->
+  <section class="whatsapp-section" id="wa-showcase">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Kanal Triage Pasien</span>
+        <h2 class="section-title">
+          Gerbang Krisis Malam Hari & <span class="highlight">Pengiriman Voice Note via WhatsApp</span>
+        </h2>
+        <p class="section-desc">
+          Saat serangan cemas melanda di pukul 01.30 malam, pasien mencurahkan isi hatinya lewat pesan suara. Pesan otomatis terhapus dari WhatsApp (&lt; 60 detik) setelah dialihkan ke sistem klinis dokter demi menjaga kerahasiaan data pasien secara mutlak.
+        </p>
+      </div>
+
+      <div class="whatsapp-demo-wrapper">
+        <!-- Phone Simulator Mockup -->
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <!-- Top Status Bar -->
+            <div class="phone-status-bar">
+              <span>01:32 AM</span>
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <span>4G</span>
+                <span>📶</span>
+                <span>🔋 42%</span>
+              </div>
+            </div>
+
+            <!-- WhatsApp Chat Header -->
+            <div class="wa-chat-header">
+              <div class="wa-avatar">Ψ</div>
+              <div class="wa-header-info">
+                <div class="wa-header-title">
+                  Klinik Psikiatri Resmi
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </div>
+                <div class="wa-header-status">Triage AI Bot Aktif &bull; Enkripsi End-to-End</div>
+              </div>
+            </div>
+
+            <!-- WhatsApp Chat Stream -->
+            <div class="wa-messages-area" id="wa-messages-stream">
+              <div class="wa-msg user">
+                Malam admin... saya tiba-tiba panik sekali, dada sesak dan takut tidak bisa bangun besok pagi. Apakah besok ada dokter yang praktek?
+                <span class="wa-time">01:30 AM</span>
+              </div>
+
+              <div class="wa-msg bot">
+                Halo, tarik napas perlahan. Anda berada di tempat yang aman. Kami siap mendampingi Anda bertemu psikiater esok pagi.
+                <div style="margin-top: 6px; font-weight: 700;">Silakan pilih dokter spesialis jiwa kami:</div>
+                
+                <div class="wa-interactive-buttons">
+                  <button class="wa-btn-choice" id="wa-btn-choose-doc">
+                    👨‍⚕️ <strong>dr. Hendra, Sp.KJ</strong> (Klinik Utama)
+                  </button>
+                  <button class="wa-btn-choice" id="wa-btn-choose-slot">
+                    🕒 <strong>Slot Esok: Pukul 09:00 - 09:30 WIB</strong>
+                  </button>
+                </div>
+                <span class="wa-time">01:30 AM</span>
+              </div>
+
+              <div class="wa-msg bot">
+                Slot 09:00 terkunci untuk Anda. Agar dokter dapat mempelajari kondisi Anda sebelum sesi tatap muka besok, mohon kirimkan <strong>Voice Note</strong> curhat singkat mengenai hal yang membuat Anda cemas malam ini.
+                <span class="wa-time">01:31 AM</span>
+              </div>
+
+              <div class="wa-msg user">
+                <div class="wa-vn-player">
+                  <button class="wa-vn-btn" id="wa-vn-play-btn" title="Putar Curhat Suara">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  </button>
+                  <div class="wa-vn-wave"></div>
+                  <span style="font-size: 0.72rem; font-family: var(--font-mono); font-weight: 700;">0:42</span>
+                </div>
+                <span class="wa-time">01:32 AM</span>
+              </div>
+
+              <div class="wa-msg bot">
+                Terima kasih. Pesan suara Anda telah dienkripsi dan diteruskan ke dasbor klinis dokter.
+                <div class="auto-purge-pill">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Auto-Purge WhatsApp dalam: <span class="purge-countdown-val" id="purge-countdown-val">59s</span>
+                </div>
+                <div style="font-size: 0.78rem; margin-top: 6px; color: var(--text-muted);">
+                  🌿 <em>Tips:</em> Tarik napas perlahan 4 detik, tahan 7 detik, buang 8 detik. Sampai jumpa esok di ruang praktek dr. Hendra pukul 09:00 WIB.
+                </div>
+                <span class="wa-time">01:32 AM</span>
+              </div>
+            </div>
+
+            <!-- WhatsApp Input Mockup -->
+            <div class="wa-input-bar">
+              <span style="font-size: 1.1rem; color: #6B7280;">😊</span>
+              <div class="wa-input-pill">Ketik keluhan Anda...</div>
+              <span style="font-size: 1.1rem; color: #128C7E;">🎤</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Deep Dive Benefits -->
+        <div class="wa-explanation-col">
+          <div class="section-tag" style="margin-bottom: 8px;">Jembatan Krisis ke Ruang Konsultasi</div>
+          <h3 style="font-size: 1.7rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">
+            Mengonversi &gt; 60% Pasien Krisis Malam Hari ke Sesi Tatap Muka
+          </h3>
+          <p style="font-size: 1rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px;">
+            Pasien tidak perlu mengingat-ingat lagi bagaimana rasanya panik semalam karena rekaman suaranya telah terpetakan dengan akurat. Dokter Sp.KJ langsung memiliki titik tolak investigasi yang tajam sejak detik pertama konsultasi dimulai.
+          </p>
+
+          <div class="overnight-distress-card">
+            <div class="distress-header">
+              <div>
+                <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">Tampilan Ringkasan di Dasbor Dokter</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Tersedia sebelum pasien melangkah masuk ke ruangan</p>
+              </div>
+              <div class="anxiety-meter">
+                <span>Skor Cemas: 8/10</span>
+                <div class="meter-bar-track"><div class="meter-bar-fill"></div></div>
+              </div>
+            </div>
+
+            <div style="background: var(--bg-surface-alt); padding: 14px; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 14px;">
+              <strong>Pemicu Utama:</strong> Ketakutan kehilangan pekerjaan, insomnia mendadak.<br>
+              <strong>Gejala Somatik:</strong> Palpitasi jantung, dispnea subjektif, tremor tangan.<br>
+              <strong>Audio Presigned URL:</strong> Aktif 60 detik untuk didengarkan dokter sebelum wawancara.
+            </div>
+
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <button class="btn btn-secondary" id="btn-simulate-crisis-alert" style="font-size: 0.82rem; padding: 8px 14px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Uji Coba Indikasi Krisis Suisidal (119 ext 8)
+              </button>
+              <button class="btn btn-secondary" id="btn-reset-wa-demo" style="font-size: 0.82rem; padding: 8px 14px;">
+                ↺ Reset Simulasi
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Clinical Personas & User Journeys
+       ========================================================================== -->
+  <section class="personas-section" id="personas-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Human-Centered Healthcare Design</span>
+        <h2 class="section-title">Dirancang Khusus untuk Psikiater & Pasien Rawat Jalan</h2>
+        <p class="section-desc">
+          Menjembatani empati klinis manusia dengan kecepatan kalkulasi komputasi modern tanpa kompromi privasi.
+        </p>
+      </div>
+
+      <div class="personas-grid">
+        <!-- Persona 1: Psychiatrist -->
+        <div class="persona-card">
+          <div class="persona-header">
+            <div class="persona-avatar avatar-doctor">H</div>
+            <div class="persona-meta">
+              <h3>dr. Hendra, Sp.KJ</h3>
+              <p>Dokter Spesialis Kedokteran Jiwa &bull; RS Swasta & Praktek Mandiri</p>
+            </div>
+          </div>
+
+          <div class="persona-points">
+            <div class="persona-point-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <div><strong>Ruang Praktek Bebas Perekam:</strong> Konsultasi tatap muka 100% intim, etis, dan bebas dari risiko kebocoran audio sesi ruangan.</div>
+            </div>
+            <div class="persona-point-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <div><strong>Deep Dive Interview Cepat:</strong> Menanyakan poin-poin krusial yang sudah dipetakan AI dari Voice Note krisis semalam.</div>
+            </div>
+            <div class="persona-point-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <div><strong>Keputusan Klinis Presisi:</strong> Menginput observasi tatap muka dan menetapkan rekam medis dalam hitungan menit.</div>
+            </div>
+          </div>
+
+          <div class="persona-steps-container">
+            <div class="persona-steps-title">Alur Kerja dr. Hendra:</div>
+            <ul class="persona-step-list">
+              <li><span class="step-num">1</span> Tinjau analisis Voice Note semalam & panduan wawancara di WebApp</li>
+              <li><span class="step-num">2</span> Panggil pasien masuk ke ruangan tanpa menyalakan mikrofon</li>
+              <li><span class="step-num">3</span> Lakukan deep dive interview terarah mengenai pemicu cemas semalam</li>
+              <li><span class="step-num">4</span> Tetapkan keputusan medis & sahkan draf rekam medis langsung ke SATUSEHAT</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Persona 2: Patient -->
+        <div class="persona-card">
+          <div class="persona-header">
+            <div class="persona-avatar avatar-patient">R</div>
+            <div class="persona-meta">
+              <h3>Rian</h3>
+              <p>27 Tahun, Karyawan Swasta &bull; Pasien Generalized Anxiety Disorder</p>
+            </div>
+          </div>
+
+          <div class="persona-points">
+            <div class="persona-point-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <div><strong>Zero-Friction WhatsApp:</strong> Mendapatkan jadwal dokter jam 01.30 malam tanpa unduh aplikasi baru.</div>
+            </div>
+            <div class="persona-point-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <div><strong>Curhat Suara Spontan:</strong> Mengirimkan Voice Note saat tangan gemetar tanpa perlu mengetik panjang.</div>
+            </div>
+            <div class="persona-point-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <div><strong>Kerahasiaan Mutlak:</strong> Pesan WA terhapus otomatis &lt; 60s dan ruangan konsultasi esok paginya bebas perekaman.</div>
+            </div>
+          </div>
+
+          <div class="persona-steps-container">
+            <div class="persona-steps-title">Alur Pasien Rian:</div>
+            <ul class="persona-step-list">
+              <li><span class="step-num">1</span> Kirim Voice Note keluhan cemas via WhatsApp klinik tengah malam</li>
+              <li><span class="step-num">2</span> Dapatkan konfirmasi slot konsultasi tatap muka pukul 09:00 WIB</li>
+              <li><span class="step-num">3</span> Hadiri sesi tatap muka esok paginya dengan dokter yang sudah paham kondisi</li>
+              <li><span class="step-num">4</span> Menjawab pertanyaan dokter secara nyaman di ruang privat</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Interactive ROI & Documentation Calculator
+       ========================================================================== -->
+  <section class="calculator-section" id="roi-calculator">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Kalkulator Penghematan Waktu & Burnout</span>
+        <h2 class="section-title">Berapa Jam Kerja yang Dapat Anda Hemat Setiap Bulan?</h2>
+        <p class="section-desc">
+          Dengan analisis awal Voice Note semalam yang sudah siap di dasbor, waktu eksplorasi anamnesis dan pencatatan rekam medis terpangkas drastis.
+        </p>
+      </div>
+
+      <div class="roi-calculator-card">
+        <div class="calc-grid">
+          <div class="calc-inputs">
+            <div class="calc-control-group">
+              <div class="calc-label-row">
+                <span class="calc-label">Jumlah Pasien per Hari:</span>
+                <span class="calc-current-value" id="val-patients-count">15 Pasien / Hari</span>
+              </div>
+              <input type="range" class="custom-range-slider" id="slider-patients-count" min="5" max="30" value="15" step="1">
+            </div>
+
+            <div class="calc-control-group">
+              <div class="calc-label-row">
+                <span class="calc-label">Waktu Ketik Rekam Medis Saat Ini:</span>
+                <span class="calc-current-value" id="val-baseline-time">18 Menit / Pasien</span>
+              </div>
+              <input type="range" class="custom-range-slider" id="slider-baseline-time" min="10" max="30" value="18" step="1">
+            </div>
+
+            <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: var(--radius-md); font-size: 0.86rem; border-left: 4px solid var(--color-teal);">
+              <strong>Tolok Ukur MindScribe:</strong> Waktu telaah analisis & keputusan medis &lt; 3 menit per pasien. Menghemat rata-rata 15 menit per sesi klinis.
+            </div>
+          </div>
+
+          <div class="calc-results-panel">
+            <div class="calc-result-stat">
+              <div class="stat-text">
+                <h5>Jam Kerja Dihemat per Bulan</h5>
+                <p>Bebas dari beban lembur administrasi</p>
+              </div>
+              <div class="stat-number" id="result-hours-saved">83 Jam</div>
+            </div>
+
+            <div class="calc-result-stat">
+              <div class="stat-text">
+                <h5>Kapasitas Sesi Baru Terbuka</h5>
+                <p>Asumsi 30 menit per sesi konsultasi tatap muka</p>
+              </div>
+              <div class="stat-number" id="result-slots-unlocked" style="color: #10B981;">+165 Sesi Baru</div>
+            </div>
+
+            <div class="calc-result-stat" style="border-bottom: none; padding-bottom: 0;">
+              <div class="stat-text">
+                <h5>Penurunan Beban Kognitif Psikiater</h5>
+                <p>Kualitas interaksi afek tatap muka meningkat</p>
+              </div>
+              <div class="stat-number" id="result-burnout-drop" style="color: #0284C7;">-83%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Security, Privacy & Ethics Architecture
+       ========================================================================== -->
+  <section class="compliance-section" id="compliance-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Kepatuhan Hukum Medis & Standar UU PDP</span>
+        <h2 class="section-title">Privasi Medis Tanpa Rekaman di Ruang Konsultasi</h2>
+        <p class="section-desc">
+          Data psikiatri adalah kategori data pribadi spesifik yang paling sensitif. MindScribe menjaga kerahasiaan ruang praktek 100% terlindungi.
+        </p>
+      </div>
+
+      <div class="security-pillars">
+        <div class="security-card">
+          <div class="security-card-header">
+            <div class="security-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h4>UU PDP No. 27/2022</h4>
+          </div>
+          <p>Kepatuhan penuh pada pemrosesan data spesifik kesehatan dengan persetujuan eksplisit dan isolasi data klinis.</p>
+        </div>
+
+        <div class="security-card">
+          <div class="security-card-header">
+            <div class="security-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <h4>Auto-Purge WhatsApp &lt; 60s</h4>
+          </div>
+          <p>Pesan suara pasien otomatis dihapus permanen dari server WhatsApp setelah didekripsi ke database klinis faskes.</p>
+        </div>
+
+        <div class="security-card">
+          <div class="security-card-header">
+            <div class="security-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h4>Zero In-Room Recording</h4>
+          </div>
+          <p>Tidak ada alat perekam di ruang konsultasi dokter. Sesi tatap muka sepenuhnya privat antara psikiater dan pasien.</p>
+        </div>
+
+        <div class="security-card">
+          <div class="security-card-header">
+            <div class="security-card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <h4>Human-in-the-Loop DPJP</h4>
+          </div>
+          <p>AI hanya bertindak sebagai asisten preparasi. Dokter Spesialis Kedokteran Jiwa (Sp.KJ) memegang kendali diagnosa 100%.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Clinical Testimonials
+       ========================================================================== -->
+  <section class="testimonials-section" id="testimonials">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Uji Coba Klinis & Testimoni</span>
+        <h2 class="section-title">Dipercaya oleh Praktisi Psikiatri Terkemuka</h2>
+      </div>
+
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <p class="testimonial-quote">
+            "Saya tidak ingin ada mikrofon yang merekam pasien saya di ruang praktek. Menganalisis VN curhat malam hari mereka dan memberi saya panduan interview adalah solusi paling elegan dan etis."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">H</div>
+            <div class="author-info">
+              <h4>dr. Hendra, Sp.KJ</h4>
+              <p>Psikiater Klinis & Mitra Uji Coba Pilot</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <p class="testimonial-quote">
+            "Pasien panik nokturnal kami akhirnya tertampung dengan aman lewat WhatsApp. Pagi harinya kami menerima daftar pasien siap konsultasi tatap muka lengkap dengan rekaman keluhan semalam."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">R</div>
+            <div class="author-info">
+              <h4>dr. Rina Suryani, Sp.KJ</h4>
+              <p>Kepala Instalasi Rawat Jalan Jiwa</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <p class="testimonial-quote">
+            "Pemisahan hak akses RBAC dan isolasi skema operasional vs klinis memberi kami keyakinan penuh terhadap audit kepatuhan UU Perlindungan Data Pribadi."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">B</div>
+            <div class="author-info">
+              <h4>Bambang Wijaya, S.Kom</h4>
+              <p>Kepala SIMRS Rumah Sakit Khusus Jiwa</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Call to Action Banner
+       ========================================================================== -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Tingkatkan Kualitas Praktik Psikiatri Anda Hari Ini</h2>
+        <p>
+          Bergabunglah dalam program percontohan MindScribe & Triage AI dan rasakan kemudahan wawancara psikiatri berbasis bukti tanpa beban administratif.
+        </p>
+        <div class="cta-actions">
+          <button class="btn btn-primary trigger-doctor-portal" style="background: #FFFFFF; color: #0F766E;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>
+            Masuk ke Portal Dokter (Sp.KJ)
+          </button>
+          <button class="btn btn-outline-glow trigger-admin-portal" style="color: #FFFFFF; border-color: #FFFFFF;">
+            Masuk ke Portal Admin Faskes
+          </button>
+          <a href="doctor-dashboard.html" class="btn" style="background: rgba(255,255,255,0.15); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.4);">
+            ⚡ Buka Sample Dashboard Dokter
+          </a>
+          <a href="admin-dashboard.html" class="btn" style="background: rgba(255,255,255,0.15); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.4);">
+            ⚡ Buka Sample Portal Admin
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       Footer & Compliance Notices
+       ========================================================================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#" class="brand-logo">
+            <div class="brand-icon">Ψ</div>
+            <div class="brand-title">MindScribe <span class="highlight">& Triage AI</span></div>
+          </a>
+          <p>
+            Platform analisis Voice Note krisis malam hari dan panduan wawancara klinis psikiater berbasis bukti. Beroperasi di bawah kerangka hukum kedokteran Republik Indonesia.
+          </p>
+        </div>
+
+        <div class="footer-column">
+          <h5>Modul Klinis</h5>
+          <ul class="footer-links">
+            <li><a href="#vn-showcase">Analisis VN Krisis Malam Hari</a></li>
+            <li><a href="#vn-showcase">Panduan Deep Dive Interview</a></li>
+            <li><a href="#wa-showcase">Gerbang WhatsApp Triage</a></li>
+            <li><a href="#compliance-section">Integrasi SATUSEHAT</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h5>Tata Kelola & Regulasi</h5>
+          <ul class="footer-links">
+            <li><a href="#compliance-section">Kepatuhan UU PDP No. 27/2022</a></li>
+            <li><a href="#compliance-section">Standar Ruangan Bebas Perekaman</a></li>
+            <li><a href="#compliance-section">Kebijakan Zero Data Retention</a></li>
+            <li><a href="#compliance-section">Auto-Purge WhatsApp &lt; 60s</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h5>Akses Portal Sistem</h5>
+          <ul class="footer-links">
+            <li><a href="doctor-dashboard.html">Sample Portal Dokter (Sp.KJ)</a></li>
+            <li><a href="admin-dashboard.html">Sample Portal Admin & Kasir Faskes</a></li>
+            <li><a href="tel:119" style="color: #EF4444; font-weight: 700;">🚨 Hotline Kemenkes RI: 119 ext 8</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          &copy; 2026 MindScribe & Triage AI. All clinical rights reserved. Sesuai standar UU PDP No. 27/2022 & Kemenkes RI.
+        </div>
+        <div>
+          Didukung oleh akselerasi Groq LPU &bull; Serverless Whisper Turbo & Llama 3.3 70B
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Distinct Portal Modals -->
+  <!-- 1. Doctor Modal -->
+  <div class="modal-overlay" id="doctor-login-modal" role="dialog" aria-modal="true">
+    <div class="auth-modal-dialog">
+      <div class="modal-header-banner banner-doctor">
+        <div class="modal-header-title">
+          <h3>Portal Dokter Spesialis Jiwa</h3>
+          <p>Akses Terenkripsi ke clinical_schema (Analisis VN & Keputusan Medis)</p>
+        </div>
+        <button class="modal-close-btn" aria-label="Tutup Dialog Login">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="rbac-security-notice">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-teal)" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div><strong>Otentikasi Klinisi Terverifikasi:</strong> Membutuhkan Nomor SIP/STR Sp.KJ dan token 2FA aktif. Sesi idle otomatis berakhir dalam 15 menit.</div>
+        </div>
+
+        <form id="doctor-login-form">
+          <div class="form-group">
+            <label for="doc-license-id">Nomor Surat Izin Praktik (SIP / STR Sp.KJ):</label>
+            <input type="text" id="doc-license-id" class="form-control" value="503/SIP-DSKJ/2026/042" required>
+          </div>
+
+          <div class="form-group">
+            <label for="doc-email">Email Dokter Terdaftar:</label>
+            <input type="email" id="doc-email" class="form-control" value="dr.hendra@klinikjiwa.id" required>
+          </div>
+
+          <div class="form-group">
+            <label for="doc-2fa">Kode Keamanan 2FA (Authenticator App):</label>
+            <input type="text" id="doc-2fa" class="form-control" value="890124" maxlength="6" required>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              Masuk ke Clinical Workspace
+            </button>
+            <a href="doctor-dashboard.html" class="btn btn-secondary" style="width: 100%; font-size: 0.82rem; text-align: center;">
+              ⚡ Buka Langsung Sample Dashboard Dokter
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Admin Modal -->
+  <div class="modal-overlay" id="admin-login-modal" role="dialog" aria-modal="true">
+    <div class="auth-modal-dialog">
+      <div class="modal-header-banner banner-admin">
+        <div class="modal-header-title">
+          <h3>Portal Administrasi & Kasir</h3>
+          <p>Akses Operasional Terbatas ke ops_schema (Jadwal & Billing)</p>
+        </div>
+        <button class="modal-close-btn" aria-label="Tutup Dialog Login">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="rbac-security-notice">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div><strong>Pembatasan RBAC Ketat:</strong> Akun staf administrasi hanya berwenang mengelola data antrean dan pembayaran. Seluruh akses ke rekam medis diblokir.</div>
+        </div>
+
+        <div class="rbac-forbidden-alert" id="admin-rbac-forbidden-alert">
+          ⛔ <strong>HTTP 403 FORBIDDEN:</strong> Akses ditolak! Akun Anda berstatus <code>ROLE_ADMIN</code>. Berdasarkan UU PDP No. 27/2022, staf non-medis dilarang keras membaca catatan psikologis pasien.
+        </div>
+
+        <form id="admin-login-form">
+          <div class="form-group">
+            <label for="admin-staff-id">ID Karyawan / Staf Kasir:</label>
+            <input type="text" id="admin-staff-id" class="form-control" value="ADM-KASIR-009" required>
+          </div>
+
+          <div class="form-group">
+            <label for="admin-pin">PIN Shift Kasir / Password:</label>
+            <input type="password" id="admin-pin" class="form-control" value="password123" required>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <button type="submit" class="btn btn-secondary" style="width: 100%;">
+              Masuk ke Portal Operasional
+            </button>
+            <a href="admin-dashboard.html" class="btn btn-secondary" style="width: 100%; font-size: 0.82rem; text-align: center; border-color: var(--border-subtle);">
+              ⚡ Buka Langsung Sample Portal Admin
+            </a>
+            <button type="button" class="btn btn-outline-glow" id="btn-admin-test-rbac" style="font-size: 0.8rem; padding: 8px; color: #EF4444; border-color: #EF4444;">
+              ⚠️ Uji Coba Percobaan Akses Rekam Medis oleh Admin (Simulasi HTTP 403)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+  <script src="js/scribe-demo.js"></script>
+  <script src="js/whatsapp-demo.js"></script>
+  <script src="js/roi-calculator.js"></script>
+  <script src="js/auth-modals.js"></script>
+</body>
+</html>

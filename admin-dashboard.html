@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindScribe — Portal Admin Operasional & Kasir (ops_schema)</title>
+  <meta name="description" content="Portal Administrasi, Antrean Pasien, Manajemen Jadwal Dokter & Kasir Faskes. Isolasi Skema Ketat Sesuai UU PDP No. 27/2022.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Core CSS -->
+  <link rel="stylesheet" href="css/design-tokens.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+
+  <style>
+    body {
+      background-color: var(--bg-app);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .admin-topbar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      flex-grow: 1;
+      width: 100%;
+    }
+
+    .admin-stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .admin-stat-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .admin-stat-number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .admin-nav-tabs {
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 24px;
+    }
+
+    .admin-tab-item {
+      padding: 12px 20px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-tab-item.active {
+      color: var(--color-teal);
+      border-bottom-color: var(--color-teal);
+    }
+
+    /* Table Styles */
+    .data-table-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .admin-table th {
+      background: var(--bg-surface-alt);
+      color: var(--text-secondary);
+      font-weight: 700;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      text-transform: uppercase;
+      font-size: 0.74rem;
+      letter-spacing: 0.05em;
+    }
+
+    .admin-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .admin-table tr:hover {
+      background: var(--bg-surface-alt);
+    }
+
+    @media (max-width: 1024px) {
+      .admin-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .admin-stats-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Emergency Triage Hotline Banner -->
+  <div class="emergency-banner" role="alert">
+    <span class="pulse-dot"></span>
+    <span><strong>Prosedur Darurat:</strong> Pasien dengan risiko tinggi otomatis dialihkan ke <strong>Hotline Kemenkes 119 ext 8</strong>. Petugas admin wajib memfasilitasi rujukan IGD Rumah Sakit Jiwa bila diperlukan.</span>
+  </div>
+
+  <!-- Admin Topbar -->
+  <header class="admin-topbar">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <a href="index.html" class="brand-logo" style="font-size: 1.1rem;" title="Kembali ke Landing Page">
+        <div class="brand-icon" style="background: linear-gradient(135deg, #1E293B 0%, #334155 100%);">Ψ</div>
+        <div class="brand-title">MindScribe <span class="highlight" style="color: #38BDF8;">Admin Faskes</span></div>
+      </a>
+      <div style="height: 20px; width: 1px; background: var(--border-subtle);"></div>
+      <span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #38BDF8; font-size: 0.75rem;">
+        Skema Terisolasi: ops_schema (Jadwal & Kasir)
+      </span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 18px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: #334155; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+          SR
+        </div>
+        <div>
+          <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">Siti Rahma</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">Staf Pendaftaran & Kasir &bull; ID: ADM-KASIR-009</div>
+        </div>
+      </div>
+
+      <!-- Theme Switcher -->
+      <button class="theme-toggle-btn" id="theme-toggle-btn" title="Ganti Tema">
+        <svg id="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+
+      <a href="index.html" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem;">
+        🚪 Keluar Portal
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="admin-container">
+
+    <!-- Operational Stat Cards -->
+    <div class="admin-stats-row">
+      <div class="admin-stat-box">
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">TOTAL PASIEN HARI INI</span>
+        <div class="admin-stat-number">18 Pasien</div>
+        <span style="font-size: 0.74rem; color: #10B981;">● 4 Sedang/Siap Konsultasi</span>
+      </div>
+
+      <div class="admin-stat-box">
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">RESERVASI WA KRISIS MALAM</span>
+        <div class="admin-stat-number" style="color: #F59E0B;">6 Pasien</div>
+        <span style="font-size: 0.74rem; color: #10B981;">Tingkat Konversi: 66.7%</span>
+      </div>
+
+      <div class="admin-stat-box">
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">TOTAL TRANSAKSI KASIR</span>
+        <div class="admin-stat-number" style="color: var(--color-teal);">Rp 9.450.000</div>
+        <span style="font-size: 0.74rem; color: var(--text-muted);">14 Lunas &bull; 4 Pending</span>
+      </div>
+
+      <div class="admin-stat-box">
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">AUDIT KEAMANAN RBAC</span>
+        <div class="admin-stat-number" style="color: #10B981;">0 Kebocoran</div>
+        <span style="font-size: 0.74rem; color: var(--text-muted);">UU PDP No. 27/2022 Patuh</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="admin-nav-tabs">
+      <div class="admin-tab-item active" id="tab-antrean">
+        📋 Antrean & Pendaftaran Pasien
+      </div>
+      <div class="admin-tab-item" id="tab-jadwal">
+        👨‍⚕️ Kuota & Jadwal Dokter Sp.KJ
+      </div>
+      <div class="admin-tab-item" id="tab-kasir">
+        💳 Kasir & Pembayaran
+      </div>
+      <div class="admin-tab-item" id="tab-audit">
+        🛡️ Immutable Audit Trail
+      </div>
+    </div>
+
+    <!-- Tab 1 Content: Queue & Appointment Management -->
+    <div class="data-table-card" id="view-antrean">
+      <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Daftar Antrean Pasien Psikiatri</h3>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">Data operasional terbatas pada Nama, No. HP, Jam Janji Temu, dan Pembayaran (Tanpa Rekam Medis).</p>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <input type="text" class="form-control" placeholder="Cari nama pasien..." style="padding: 6px 12px; font-size: 0.82rem; width: 180px;">
+          <button class="btn btn-secondary btn-trigger-slot-management" id="btn-quick-manage-slots" style="padding: 6px 14px; font-size: 0.82rem; border: 1.5px solid var(--color-teal); color: var(--color-teal); font-weight: 700; display: flex; align-items: center; gap: 6px; background: rgba(13, 148, 136, 0.08); cursor: pointer;" title="Klik untuk membuka jadwal dan melihat jam occupied">
+            🗓️ Atur Slot Jam Konsultasi
+          </button>
+          <button class="btn btn-primary" style="padding: 6px 14px; font-size: 0.82rem;" onclick="alert('Form pendaftaran pasien walk-in siap dibuka')">
+            + Daftarkan Pasien Walk-in
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>No. Antrean</th>
+              <th>Nama Pasien</th>
+              <th>No. WhatsApp</th>
+              <th>Jam Sesi</th>
+              <th>Dokter DPJP</th>
+              <th>Kanal Reservasi</th>
+              <th>Status Operasional</th>
+              <th>Status Bayar</th>
+              <th>Aksi Admin</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1: Rian -->
+            <tr>
+              <td><strong>#A-01</strong></td>
+              <td><strong>Rian</strong> (27 thn)</td>
+              <td>0812-9988-xxxx</td>
+              <td><span style="font-family: var(--font-mono); font-weight: 700;">09:00 - 09:30</span></td>
+              <td>dr. Hendra, Sp.KJ</td>
+              <td>
+                <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #F59E0B; font-size: 0.7rem;">
+                  🌙 WA Triage (01:30 AM)
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">
+                  ● Sedang Konsultasi
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">
+                  Lunas (QRIS)
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="alert('Panggilan antrean pasien Rian dibunyikan ke speaker ruang tunggu')">
+                    🔊 Panggil
+                  </button>
+                  <button class="btn btn-outline-glow btn-test-blocked" style="padding: 4px 8px; font-size: 0.75rem; color: #EF4444; border-color: #EF4444;" title="Uji Coba Proteksi RBAC">
+                    🔒 Rekam Medis
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 2 -->
+            <tr>
+              <td><strong>#A-02</strong></td>
+              <td>Dewi Sartika (34 thn)</td>
+              <td>0857-1122-xxxx</td>
+              <td><span style="font-family: var(--font-mono); font-weight: 700;">09:45 - 10:15</span></td>
+              <td>dr. Hendra, Sp.KJ</td>
+              <td>
+                <span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284C7; font-size: 0.7rem;">
+                  Loket Klinik
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: #FEF3C7; color: #92400E;">
+                  ⏳ Menunggu di Ruang Tunggu
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">
+                  Lunas (Tunai)
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">
+                    🔊 Panggil
+                  </button>
+                  <button class="btn btn-outline-glow btn-test-blocked" style="padding: 4px 8px; font-size: 0.75rem; color: #EF4444; border-color: #EF4444;">
+                    🔒 Rekam Medis
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 3 -->
+            <tr>
+              <td><strong>#B-01</strong></td>
+              <td>Ahmad Fauzi (41 thn)</td>
+              <td>0878-3344-xxxx</td>
+              <td><span style="font-family: var(--font-mono); font-weight: 700;">10:30 - 11:00</span></td>
+              <td>dr. Rina Suryani, Sp.KJ</td>
+              <td>
+                <span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284C7; font-size: 0.7rem;">
+                  PWA Intake
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: rgba(100, 116, 139, 0.15); color: #64748B;">
+                  🕒 Terjadwal
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: #FEE2E2; color: #991B1B;">
+                  Menunggu Kasir
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="alert('Kasir diproses: Pasien Ahmad Fauzi - Biaya Konsultasi Rp 450.000')">
+                    💳 Bayar
+                  </button>
+                  <button class="btn btn-outline-glow btn-test-blocked" style="padding: 4px 8px; font-size: 0.75rem; color: #EF4444; border-color: #EF4444;">
+                    🔒 Rekam Medis
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Row 4 -->
+            <tr>
+              <td><strong>#A-03</strong></td>
+              <td>Siti Nurhaliza (22 thn)</td>
+              <td>0813-7788-xxxx</td>
+              <td><span style="font-family: var(--font-mono); font-weight: 700;">11:15 - 11:45</span></td>
+              <td>dr. Hendra, Sp.KJ</td>
+              <td>
+                <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #F59E0B; font-size: 0.7rem;">
+                  🌙 WA Triage (02:15 AM)
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: rgba(100, 116, 139, 0.15); color: #64748B;">
+                  🕒 Terjadwal
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">
+                  Lunas (Asuransi)
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">
+                    🔊 Panggil
+                  </button>
+                  <button class="btn btn-outline-glow btn-test-blocked" style="padding: 4px 8px; font-size: 0.75rem; color: #EF4444; border-color: #EF4444;">
+                    🔒 Rekam Medis
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 2 Content: Jadwal & Kuota Dokter (Interactive Slot Management) -->
+    <div class="data-table-card" id="view-jadwal" style="display: none; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+        <div>
+          <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 4px;">
+            Manajemen Jadwal Praktik & Ketersediaan Slot Konsultasi
+          </h3>
+          <p style="font-size: 0.84rem; color: var(--text-secondary);">
+            Atur slot jam konsultasi dokter secara real-time. Jam yang berstatus <strong>Occupied / Terisi</strong> otomatis disembunyikan dari pilihan bot WhatsApp malam hari.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-secondary" id="btn-refresh-slots" style="font-size: 0.82rem; padding: 6px 14px;">
+            🔄 Sinkronisasi Status WhatsApp
+          </button>
+        </div>
+      </div>
+
+      <!-- Doctor Overview Cards -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+        <!-- Card dr. Hendra -->
+        <div style="background: var(--bg-surface-alt); padding: 20px; border-radius: var(--radius-lg); border: 2px solid var(--color-teal); position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div>
+              <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">dr. Hendra, Sp.KJ</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted);">Spesialis Kedokteran Jiwa &bull; Ruang Praktek #1</p>
+            </div>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">
+              ● Sedang Praktek
+            </span>
+          </div>
+
+          <div style="display: flex; gap: 16px; margin-bottom: 16px; font-size: 0.84rem; flex-wrap: wrap;">
+            <div>Kuota Harian: <strong>12 Slot</strong></div>
+            <div style="color: #EF4444;">Terisi (Occupied): <strong id="hendra-occupied-count">8 Slot</strong></div>
+            <div style="color: #10B981;">Tersedia: <strong id="hendra-available-count">4 Slot</strong></div>
+          </div>
+
+          <button class="btn btn-primary btn-open-slot-manager" data-doctor="hendra" id="btn-manage-slots-hendra" style="width: 100%; font-size: 0.86rem; padding: 10px 16px; font-weight: 700; cursor: pointer;">
+            🗓️ Atur Slot Jam Konsultasi (Lihat Jam Terisi)
+          </button>
+        </div>
+
+        <!-- Card dr. Rina -->
+        <div style="background: var(--bg-surface-alt); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div>
+              <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">dr. Rina Suryani, Sp.KJ</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted);">Kepala Rawat Jalan &bull; Ruang Praktek #2</p>
+            </div>
+            <span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284C7;">
+              Praktek Pukul 10:00
+            </span>
+          </div>
+
+          <div style="display: flex; gap: 16px; margin-bottom: 16px; font-size: 0.84rem; flex-wrap: wrap;">
+            <div>Kuota Harian: <strong>10 Slot</strong></div>
+            <div style="color: #EF4444;">Terisi (Occupied): <strong id="rina-occupied-count">6 Slot</strong></div>
+            <div style="color: #10B981;">Tersedia: <strong id="rina-available-count">4 Slot</strong></div>
+          </div>
+
+          <button class="btn btn-secondary btn-open-slot-manager" data-doctor="rina" id="btn-manage-slots-rina" style="width: 100%; font-size: 0.86rem; padding: 10px 16px; font-weight: 700; cursor: pointer;">
+            🗓️ Atur Slot Jam Konsultasi (Lihat Jam Terisi)
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Slot Matrix & Detailed Occupied Hours -->
+      <div id="slot-matrix-section" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 20px; transition: all 0.3s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary);">
+              Pilih Dokter:
+            </span>
+            <div class="tab-switcher" style="margin-bottom: 0;">
+              <button class="tab-btn active" id="btn-filter-doc-hendra">dr. Hendra, Sp.KJ</button>
+              <button class="tab-btn" id="btn-filter-doc-rina">dr. Rina Suryani, Sp.KJ</button>
+            </div>
+          </div>
+
+          <!-- Color Legend -->
+          <div style="display: flex; gap: 12px; font-size: 0.76rem; font-weight: 600; flex-wrap: wrap;">
+            <span style="display: flex; align-items: center; gap: 4px; color: #EF4444;">
+              <span style="width: 10px; height: 10px; background: #EF4444; border-radius: 2px;"></span>
+              Terisi (Occupied)
+            </span>
+            <span style="display: flex; align-items: center; gap: 4px; color: #10B981;">
+              <span style="width: 10px; height: 10px; background: #10B981; border-radius: 2px;"></span>
+              Tersedia (Bisa Dipesan)
+            </span>
+            <span style="display: flex; align-items: center; gap: 4px; color: #F59E0B;">
+              <span style="width: 10px; height: 10px; background: #F59E0B; border-radius: 2px;"></span>
+              Sedang Sesi
+            </span>
+            <span style="display: flex; align-items: center; gap: 4px; color: var(--text-muted);">
+              <span style="width: 10px; height: 10px; background: var(--text-muted); border-radius: 2px;"></span>
+              Istirahat (ISHOMA)
+            </span>
+          </div>
+        </div>
+
+        <!-- Dedicated Summary Banner: Jam-Jam yang Sudah OCCUPIED -->
+        <div id="occupied-summary-banner" style="background: rgba(239, 68, 68, 0.07); border: 1.5px solid rgba(239, 68, 68, 0.35); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 22px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.2rem;">🔴</span>
+              <div>
+                <strong style="color: #EF4444; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.03em;">
+                  RINCIAN JAM KONSULTASI YANG SUDAH TERISI (OCCUPIED):
+                </strong>
+                <span id="active-doctor-badge" class="badge" style="background: var(--color-teal); color: white; margin-left: 6px; font-size: 0.72rem; vertical-align: middle;">dr. Hendra, Sp.KJ</span>
+              </div>
+            </div>
+            <div style="font-size: 0.82rem; font-weight: 700;">
+              Total: <span id="summary-slot-ratio" style="color: #EF4444;">8 Terisi</span> &bull; <span id="summary-available-ratio" style="color: #10B981;">4 Tersedia</span>
+            </div>
+          </div>
+
+          <!-- Occupied Chips List -->
+          <div id="occupied-chips-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Available Chips List -->
+          <div style="padding-top: 10px; border-top: 1px dashed rgba(239, 68, 68, 0.25); display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.78rem;">
+            <span style="color: #10B981; font-weight: 700;">🟢 Jam Masih Tersedia (Dapat Dipesan):</span>
+            <div id="available-chips-list" style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Slot Grid Container for dr. Hendra -->
+        <div id="slots-grid-hendra" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;">
+          <!-- Slot 1 -->
+          <div class="slot-card" data-doctor="hendra" data-time="08:30 - 09:00" data-patient="Budi Santoso (#A-00)" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">08:30 - 09:00</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Budi Santoso (#A-00)</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Sumber: Loket Pendaftaran &bull; Selesai</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Slot 2 (Active Session) -->
+          <div class="slot-card" data-doctor="hendra" data-time="09:00 - 09:30" data-patient="Rian (27 thn) - #A-01" data-status="session" style="background: rgba(245, 158, 11, 0.1); border: 2px solid #F59E0B; border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #D97706;">09:00 - 09:30</span>
+              <span class="badge slot-badge" style="background: #FEF3C7; color: #92400E; font-size: 0.68rem;">SEDANG SESI</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Rian (27 thn) - #A-01</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: #B45309; margin-bottom: 8px;">🌙 Reservasi WA Krisis (01:32 AM) &bull; Di Ruangan</div>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.72rem; width: 100%; border-color: #F59E0B; color: #D97706; cursor: default;">Sedang Konsultasi</button>
+          </div>
+
+          <!-- Slot 3 -->
+          <div class="slot-card" data-doctor="hendra" data-time="09:45 - 10:15" data-patient="Dewi Sartika (34 thn) - #A-02" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">09:45 - 10:15</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Dewi Sartika (34 thn) - #A-02</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Sumber: Loket Rawat Jalan &bull; Menunggu</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Slot 4 -->
+          <div class="slot-card" data-doctor="hendra" data-time="10:30 - 11:00" data-patient="Dimas Prasetyo (39 thn) - #A-03" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">10:30 - 11:00</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Dimas Prasetyo (39 thn) - #A-03</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">🌙 Reservasi WA Krisis (02:00 AM)</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Slot 5 -->
+          <div class="slot-card" data-doctor="hendra" data-time="11:15 - 11:45" data-patient="Siti Nurhaliza (22 thn) - #A-04" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">11:15 - 11:45</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Siti Nurhaliza (22 thn) - #A-04</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">🌙 Reservasi WA Krisis (02:15 AM)</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Slot 6: Break -->
+          <div class="slot-card" data-doctor="hendra" data-time="12:00 - 13:00" data-status="break" style="background: var(--bg-surface-alt); border: 1px dashed var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 700; font-size: 0.92rem; color: var(--text-muted);">12:00 - 13:00</span>
+              <span class="badge slot-badge" style="background: rgba(100, 116, 139, 0.15); color: var(--text-muted); font-size: 0.68rem;">ISHOMA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: var(--text-muted);">Istirahat Siang & Sholat Dokter</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">Slot dikunci otomatis</div>
+          </div>
+
+          <!-- Slot 7: Available -->
+          <div class="slot-card" data-doctor="hendra" data-time="13:00 - 13:30" data-status="available" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #10B981;">13:00 - 13:30</span>
+              <span class="badge slot-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.68rem;">TERSEDIA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: #10B981; font-weight: 600;">Slot Kosong</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Tersedia di WhatsApp Bot & Loket</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-book-manual" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;">+ Daftarkan Pasien</button>
+              <button class="btn btn-secondary btn-lock-slot" style="padding: 4px 8px; font-size: 0.72rem;">Kunci</button>
+            </div>
+          </div>
+
+          <!-- Slot 8 -->
+          <div class="slot-card" data-doctor="hendra" data-time="13:30 - 14:00" data-patient="Maya Indah (29 thn) - #A-05" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">13:30 - 14:00</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Maya Indah (29 thn) - #A-05</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Sumber: Rujukan RS &bull; Terjadwal</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Slot 9: Available -->
+          <div class="slot-card" data-doctor="hendra" data-time="14:00 - 14:30" data-status="available" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #10B981;">14:00 - 14:30</span>
+              <span class="badge slot-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.68rem;">TERSEDIA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: #10B981; font-weight: 600;">Slot Kosong</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Tersedia di WhatsApp Bot & Loket</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-book-manual" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;">+ Daftarkan Pasien</button>
+              <button class="btn btn-secondary btn-lock-slot" style="padding: 4px 8px; font-size: 0.72rem;">Kunci</button>
+            </div>
+          </div>
+
+          <!-- Slot 10 -->
+          <div class="slot-card" data-doctor="hendra" data-time="14:30 - 15:00" data-patient="Kevin Hartanto (31 thn) - #A-06" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">14:30 - 15:00</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Kevin Hartanto (31 thn) - #A-06</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">🌙 Reservasi WA Krisis (03:10 AM)</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Slot 11: Available -->
+          <div class="slot-card" data-doctor="hendra" data-time="15:00 - 15:30" data-status="available" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #10B981;">15:00 - 15:30</span>
+              <span class="badge slot-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.68rem;">TERSEDIA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: #10B981; font-weight: 600;">Slot Kosong</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Tersedia di WhatsApp Bot & Loket</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-book-manual" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;">+ Daftarkan Pasien</button>
+              <button class="btn btn-secondary btn-lock-slot" style="padding: 4px 8px; font-size: 0.72rem;">Kunci</button>
+            </div>
+          </div>
+
+          <!-- Slot 12: Available -->
+          <div class="slot-card" data-doctor="hendra" data-time="15:30 - 16:00" data-status="available" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #10B981;">15:30 - 16:00</span>
+              <span class="badge slot-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.68rem;">TERSEDIA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: #10B981; font-weight: 600;">Slot Kosong</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Tersedia di WhatsApp Bot & Loket</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-book-manual" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;">+ Daftarkan Pasien</button>
+              <button class="btn btn-secondary btn-lock-slot" style="padding: 4px 8px; font-size: 0.72rem;">Kunci</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slot Grid Container for dr. Rina (Initially hidden, complete 10 slots) -->
+        <div id="slots-grid-rina" style="display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;">
+          <!-- Rina Slot 1 -->
+          <div class="slot-card" data-doctor="rina" data-time="10:00 - 10:30" data-patient="Ahmad Fauzi (41 thn) - #B-01" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">10:00 - 10:30</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Ahmad Fauzi (41 thn) - #B-01</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">PWA Intake &bull; Terjadwal</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Rina Slot 2 -->
+          <div class="slot-card" data-doctor="rina" data-time="10:30 - 11:00" data-patient="Ratna Sari (28 thn) - #B-02" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">10:30 - 11:00</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Ratna Sari (28 thn) - #B-02</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">🌙 Reservasi WA Krisis (00:45 AM)</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Rina Slot 3: Available -->
+          <div class="slot-card" data-doctor="rina" data-time="11:00 - 11:30" data-status="available" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #10B981;">11:00 - 11:30</span>
+              <span class="badge slot-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.68rem;">TERSEDIA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: #10B981; font-weight: 600;">Slot Kosong</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Tersedia di WhatsApp Bot & Loket</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-book-manual" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;">+ Daftarkan Pasien</button>
+              <button class="btn btn-secondary btn-lock-slot" style="padding: 4px 8px; font-size: 0.72rem;">Kunci</button>
+            </div>
+          </div>
+
+          <!-- Rina Slot 4 -->
+          <div class="slot-card" data-doctor="rina" data-time="11:30 - 12:00" data-patient="Fajar Nugraha (35 thn) - #B-03" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">11:30 - 12:00</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Fajar Nugraha (35 thn) - #B-03</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Loket Pendaftaran &bull; Terjadwal</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Rina Slot 5: Break -->
+          <div class="slot-card" data-doctor="rina" data-time="12:00 - 13:00" data-status="break" style="background: var(--bg-surface-alt); border: 1px dashed var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 700; font-size: 0.92rem; color: var(--text-muted);">12:00 - 13:00</span>
+              <span class="badge slot-badge" style="background: rgba(100, 116, 139, 0.15); color: var(--text-muted); font-size: 0.68rem;">ISHOMA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: var(--text-muted);">Istirahat Siang & Sholat Dokter</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">Slot dikunci otomatis</div>
+          </div>
+
+          <!-- Rina Slot 6 -->
+          <div class="slot-card" data-doctor="rina" data-time="13:00 - 13:30" data-patient="Mega Utami (30 thn) - #B-04" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">13:00 - 13:30</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Mega Utami (30 thn) - #B-04</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">🌙 Reservasi WA Krisis (01:10 AM)</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Rina Slot 7 -->
+          <div class="slot-card" data-doctor="rina" data-time="13:30 - 14:00" data-patient="Bambang Susanto (45 thn) - #B-05" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">13:30 - 14:00</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Bambang Susanto (45 thn) - #B-05</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Sumber: Rujukan BPJS</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Rina Slot 8: Available -->
+          <div class="slot-card" data-doctor="rina" data-time="14:00 - 14:30" data-status="available" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #10B981;">14:00 - 14:30</span>
+              <span class="badge slot-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.68rem;">TERSEDIA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: #10B981; font-weight: 600;">Slot Kosong</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Tersedia di WhatsApp Bot & Loket</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-book-manual" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;">+ Daftarkan Pasien</button>
+              <button class="btn btn-secondary btn-lock-slot" style="padding: 4px 8px; font-size: 0.72rem;">Kunci</button>
+            </div>
+          </div>
+
+          <!-- Rina Slot 9 -->
+          <div class="slot-card" data-doctor="rina" data-time="14:30 - 15:00" data-patient="Cindy Claudia (26 thn) - #B-06" data-status="occupied" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #EF4444;">14:30 - 15:00</span>
+              <span class="badge slot-badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.68rem;">OCCUPIED</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Cindy Claudia (26 thn) - #B-06</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">🌙 Reservasi WA Krisis (02:40 AM)</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            </div>
+          </div>
+
+          <!-- Rina Slot 10: Available -->
+          <div class="slot-card" data-doctor="rina" data-time="15:00 - 15:30" data-status="available" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #10B981;">15:00 - 15:30</span>
+              <span class="badge slot-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.68rem;">TERSEDIA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: #10B981; font-weight: 600;">Slot Kosong</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Tersedia di WhatsApp Bot & Loket</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-book-manual" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;">+ Daftarkan Pasien</button>
+              <button class="btn btn-secondary btn-lock-slot" style="padding: 4px 8px; font-size: 0.72rem;">Kunci</button>
+            </div>
+          </div>
+
+          <!-- Rina Slot 11: Available -->
+          <div class="slot-card" data-doctor="rina" data-time="15:30 - 16:00" data-status="available" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="slot-time" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.92rem; color: #10B981;">15:30 - 16:00</span>
+              <span class="badge slot-badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.68rem;">TERSEDIA</span>
+            </div>
+            <div class="slot-patient" style="font-size: 0.82rem; color: #10B981; font-weight: 600;">Slot Kosong</div>
+            <div class="slot-meta" style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Tersedia di WhatsApp Bot & Loket</div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-book-manual" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;">+ Daftarkan Pasien</button>
+              <button class="btn btn-secondary btn-lock-slot" style="padding: 4px 8px; font-size: 0.72rem;">Kunci</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab 3 Content: Kasir & Billing (Initially hidden) -->
+    <div class="data-table-card" id="view-kasir" style="display: none; padding: 24px;">
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Transaksi Pembayaran & Kwitansi Kasir</h3>
+      <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 16px;">Biaya konsultasi spesialis jiwa, administrasi klinik, dan penerbitan nota resmi.</p>
+      <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: var(--radius-md); font-size: 0.86rem;">
+        Penerimaan Hari Ini: <strong>Rp 9.450.000</strong> (QRIS: Rp 6.200.000 &bull; Tunai: Rp 1.800.000 &bull; Asuransi: Rp 1.450.000)
+      </div>
+    </div>
+
+    <!-- Tab 4 Content: Audit Trail (Initially hidden) -->
+    <div class="data-table-card" id="view-audit" style="display: none; padding: 24px;">
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">Immutable Security Audit Trail</h3>
+      <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 16px;">Catatan audit akses terenkripsi pgcrypto sesuai standar audit SaMD Kemenkes.</p>
+      <div style="font-family: var(--font-mono); font-size: 0.8rem; background: var(--code-bg); color: #38BDF8; padding: 14px; border-radius: var(--radius-md); line-height: 1.6;">
+        [2026-09-22 09:00:12] AUTH_SUCCESS: dr. Hendra, Sp.KJ connected to clinical_schema (Session #9812)<br>
+        [2026-09-22 09:02:44] OPS_READ: Staff ADM-KASIR-009 retrieved today appointments queue<br>
+        [2026-09-22 09:04:18] WA_INGEST: Voice note ingested for patient Rian -> encrypted to S3<br>
+        [2026-09-22 09:05:18] WA_AUTO_PURGE: Message deleted from WhatsApp API endpoint &lt; 60s
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Strict RBAC HTTP 403 Forbidden Modal Simulation -->
+  <div class="modal-overlay" id="admin-rbac-modal" role="dialog" aria-modal="true">
+    <div class="auth-modal-dialog" style="border: 2px solid #EF4444;">
+      <div class="modal-header-banner" style="background: #991B1B; color: white;">
+        <div class="modal-header-title">
+          <h3 style="display: flex; align-items: center; gap: 8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            HTTP 403 FORBIDDEN
+          </h3>
+          <p>Pelanggaran Hak Akses RBAC Klinis Terdeteksi</p>
+        </div>
+        <button class="modal-close-btn" id="btn-close-rbac-modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="background: #FEE2E2; border: 1px solid #FECACA; padding: 14px; border-radius: var(--radius-md); font-size: 0.88rem; color: #991B1B; line-height: 1.5;">
+          <strong>AKSES DITOLAK:</strong> Akun Anda berstatus <code>ROLE_ADMIN</code> (Staf Pendaftaran/Kasir). Berdasarkan <strong>UU Perlindungan Data Pribadi (UU PDP No. 27/2022)</strong> dan isolasi skema PostgreSQL <code>clinical_schema</code>, staf non-medis <strong>DILARANG KERAS</strong> membaca isi catatan wawancara status mental (MSE) atau rekam medis psikiatri pasien.
+        </div>
+
+        <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;">
+          🔒 Percobaan akses ini telah dicatat secara otomatis dalam <strong>Immutable Security Audit Trail</strong> faskes Anda demi akuntabilitas hukum.
+        </div>
+
+        <button class="btn btn-primary" id="btn-understand-rbac" style="background: #991B1B; width: 100%;">
+          Saya Memahami Kebijakan Kerahasiaan Medis
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+  <script>
+    // Tab switching for Admin Dashboard
+    const tabAntrean = document.getElementById('tab-antrean');
+    const tabJadwal = document.getElementById('tab-jadwal');
+    const tabKasir = document.getElementById('tab-kasir');
+    const tabAudit = document.getElementById('tab-audit');
+
+    const viewAntrean = document.getElementById('view-antrean');
+    const viewJadwal = document.getElementById('view-jadwal');
+    const viewKasir = document.getElementById('view-kasir');
+    const viewAudit = document.getElementById('view-audit');
+
+    const allTabs = [tabAntrean, tabJadwal, tabKasir, tabAudit];
+    const allViews = [viewAntrean, viewJadwal, viewKasir, viewAudit];
+
+    function activateTab(activeTab, activeView) {
+      allTabs.forEach(t => t.classList.remove('active'));
+      allViews.forEach(v => v.style.display = 'none');
+
+      activeTab.classList.add('active');
+      activeView.style.display = 'block';
+    }
+
+    tabAntrean.addEventListener('click', () => activateTab(tabAntrean, viewAntrean));
+    tabJadwal.addEventListener('click', () => {
+      activateTab(tabJadwal, viewJadwal);
+      updateOccupiedSummary(currentDoctor);
+    });
+    tabKasir.addEventListener('click', () => activateTab(tabKasir, viewKasir));
+    tabAudit.addEventListener('click', () => activateTab(tabAudit, viewAudit));
+
+    // ==========================================
+    // SLOT MANAGEMENT & OCCUPIED HOURS LOGIC
+    // ==========================================
+    let currentDoctor = 'hendra';
+
+    const btnFilterHendra = document.getElementById('btn-filter-doc-hendra');
+    const btnFilterRina = document.getElementById('btn-filter-doc-rina');
+    const slotsGridHendra = document.getElementById('slots-grid-hendra');
+    const slotsGridRina = document.getElementById('slots-grid-rina');
+    const activeDoctorBadge = document.getElementById('active-doctor-badge');
+    const occupiedChipsList = document.getElementById('occupied-chips-list');
+    const availableChipsList = document.getElementById('available-chips-list');
+    const summarySlotRatio = document.getElementById('summary-slot-ratio');
+    const summaryAvailableRatio = document.getElementById('summary-available-ratio');
+
+    function switchDoctor(doctor) {
+      currentDoctor = doctor;
+      if (doctor === 'hendra') {
+        btnFilterHendra.classList.add('active');
+        btnFilterRina.classList.remove('active');
+        slotsGridHendra.style.display = 'grid';
+        slotsGridRina.style.display = 'none';
+        if (activeDoctorBadge) activeDoctorBadge.textContent = 'dr. Hendra, Sp.KJ';
+      } else {
+        btnFilterRina.classList.add('active');
+        btnFilterHendra.classList.remove('active');
+        slotsGridRina.style.display = 'grid';
+        slotsGridHendra.style.display = 'none';
+        if (activeDoctorBadge) activeDoctorBadge.textContent = 'dr. Rina Suryani, Sp.KJ';
+      }
+      updateOccupiedSummary(doctor);
+    }
+
+    if (btnFilterHendra) btnFilterHendra.addEventListener('click', () => switchDoctor('hendra'));
+    if (btnFilterRina) btnFilterRina.addEventListener('click', () => switchDoctor('rina'));
+
+    // Update Occupied and Available Hours Summary Banner
+    function updateOccupiedSummary(doctor) {
+      const currentGrid = (doctor === 'hendra') ? slotsGridHendra : slotsGridRina;
+      if (!currentGrid || !occupiedChipsList || !availableChipsList) return;
+
+      const cards = currentGrid.querySelectorAll('.slot-card');
+      let occupiedCount = 0;
+      let availableCount = 0;
+      let totalSlots = 0;
+
+      occupiedChipsList.innerHTML = '';
+      availableChipsList.innerHTML = '';
+
+      cards.forEach(card => {
+        const status = card.getAttribute('data-status');
+        const time = card.getAttribute('data-time') || card.querySelector('.slot-time')?.textContent || '';
+        const patient = card.getAttribute('data-patient') || card.querySelector('.slot-patient')?.textContent || '';
+
+        if (status === 'occupied' || status === 'session') {
+          occupiedCount++;
+          totalSlots++;
+
+          const chip = document.createElement('div');
+          chip.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px; font-size: 0.76rem; font-weight: 700; cursor: pointer; transition: transform 0.15s ease;';
+          
+          if (status === 'session') {
+            chip.style.background = 'rgba(245, 158, 11, 0.15)';
+            chip.style.color = '#B45309';
+            chip.style.border = '1px solid rgba(245, 158, 11, 0.4)';
+            chip.innerHTML = `<span>🟡 <strong>${time}</strong> (${patient})</span>`;
+          } else {
+            chip.style.background = 'rgba(239, 68, 68, 0.12)';
+            chip.style.color = '#991B1B';
+            chip.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+            chip.innerHTML = `<span>🔴 <strong>${time}</strong> (${patient})</span>`;
+          }
+
+          chip.title = `Klik untuk menuju slot jam ${time}`;
+          chip.addEventListener('click', () => {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.style.outline = '3px solid #EF4444';
+            setTimeout(() => { card.style.outline = 'none'; }, 1500);
+          });
+          occupiedChipsList.appendChild(chip);
+
+        } else if (status === 'available') {
+          availableCount++;
+          totalSlots++;
+
+          const chip = document.createElement('div');
+          chip.style.cssText = 'display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.74rem; font-weight: 700; background: rgba(16, 185, 129, 0.12); color: #047857; border: 1px solid rgba(16, 185, 129, 0.3); cursor: pointer;';
+          chip.innerHTML = `<span>🟢 ${time}</span>`;
+          chip.title = `Slot jam ${time} masih tersedia. Klik untuk daftarkan pasien.`;
+          chip.addEventListener('click', () => {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.style.outline = '3px solid #10B981';
+            setTimeout(() => { card.style.outline = 'none'; }, 1500);
+          });
+          availableChipsList.appendChild(chip);
+        }
+      });
+
+      // Update ratio text in summary banner
+      if (summarySlotRatio) summarySlotRatio.textContent = `${occupiedCount} Terisi (Occupied)`;
+      if (summaryAvailableRatio) summaryAvailableRatio.textContent = `${availableCount} Tersedia`;
+
+      // Update counters in Doctor Cards
+      if (doctor === 'hendra') {
+        const hendraOcc = document.getElementById('hendra-occupied-count');
+        const hendraAvail = document.getElementById('hendra-available-count');
+        if (hendraOcc) hendraOcc.textContent = `${occupiedCount} Slot`;
+        if (hendraAvail) hendraAvail.textContent = `${availableCount} Slot`;
+      } else {
+        const rinaOcc = document.getElementById('rina-occupied-count');
+        const rinaAvail = document.getElementById('rina-available-count');
+        if (rinaOcc) rinaOcc.textContent = `${occupiedCount} Slot`;
+        if (rinaAvail) rinaAvail.textContent = `${availableCount} Slot`;
+      }
+    }
+
+    // Connect Open Slot Management Buttons
+    function triggerSlotManager(doctor = 'hendra') {
+      activateTab(tabJadwal, viewJadwal);
+      switchDoctor(doctor);
+
+      const section = document.getElementById('slot-matrix-section');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        section.style.boxShadow = '0 0 0 3px var(--color-teal)';
+        setTimeout(() => { section.style.boxShadow = 'var(--shadow-md)'; }, 1800);
+      }
+
+      if (window.showToast) {
+        window.showToast(`🗓️ Membuka Jadwal & Rincian Jam Terisi (${doctor === 'hendra' ? 'dr. Hendra, Sp.KJ' : 'dr. Rina Suryani, Sp.KJ'})`, 'info');
+      }
+    }
+
+    // Quick Manage Slot Button on Antrean tab
+    const btnQuickManage = document.getElementById('btn-quick-manage-slots');
+    if (btnQuickManage) {
+      btnQuickManage.addEventListener('click', (e) => {
+        e.preventDefault();
+        triggerSlotManager('hendra');
+      });
+    }
+
+    // Buttons on Doctor Cards
+    const btnManageHendra = document.getElementById('btn-manage-slots-hendra');
+    if (btnManageHendra) {
+      btnManageHendra.addEventListener('click', (e) => {
+        e.preventDefault();
+        triggerSlotManager('hendra');
+      });
+    }
+
+    const btnManageRina = document.getElementById('btn-manage-slots-rina');
+    if (btnManageRina) {
+      btnManageRina.addEventListener('click', (e) => {
+        e.preventDefault();
+        triggerSlotManager('rina');
+      });
+    }
+
+    // Event Delegation for Interactive Slot Actions
+    document.addEventListener('click', function (e) {
+      // 1. Book Manual (Register Patient into an available slot)
+      const bookBtn = e.target.closest('.btn-book-manual');
+      if (bookBtn) {
+        const card = bookBtn.closest('.slot-card');
+        if (!card) return;
+        const time = card.getAttribute('data-time') || 'Sesi Terpilih';
+        const docName = card.getAttribute('data-doctor') === 'rina' ? 'dr. Rina Suryani, Sp.KJ' : 'dr. Hendra, Sp.KJ';
+
+        const patientName = prompt(`Daftarkan Pasien Manual pada slot ${time} (${docName}):\nMasukkan Nama Pasien:`, "Pasien Walk-in");
+        if (patientName && patientName.trim()) {
+          const cleanName = patientName.trim();
+          card.setAttribute('data-status', 'occupied');
+          card.setAttribute('data-patient', cleanName);
+          card.style.background = 'rgba(239, 68, 68, 0.08)';
+          card.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+
+          const timeEl = card.querySelector('.slot-time');
+          if (timeEl) timeEl.style.color = '#EF4444';
+
+          const badgeEl = card.querySelector('.slot-badge');
+          if (badgeEl) {
+            badgeEl.className = 'badge slot-badge';
+            badgeEl.style.background = '#FEE2E2';
+            badgeEl.style.color = '#991B1B';
+            badgeEl.textContent = 'OCCUPIED';
+          }
+
+          const patientEl = card.querySelector('.slot-patient');
+          if (patientEl) {
+            patientEl.style.color = 'var(--text-primary)';
+            patientEl.style.fontWeight = '700';
+            patientEl.textContent = cleanName;
+          }
+
+          const metaEl = card.querySelector('.slot-meta');
+          if (metaEl) {
+            metaEl.textContent = 'Sumber: Loket Pendaftaran &bull; Terjadwal';
+          }
+
+          // Replace buttons
+          const actionContainer = bookBtn.parentElement;
+          if (actionContainer) {
+            actionContainer.innerHTML = `
+              <button class="btn btn-secondary btn-slot-cancel" style="padding: 4px 8px; font-size: 0.72rem; flex: 1; color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">Kosongkan Slot</button>
+            `;
+          }
+
+          updateOccupiedSummary(currentDoctor);
+          if (window.showToast) {
+            window.showToast(`✅ Slot jam ${time} berhasil diisi untuk ${cleanName}. Otomatis disembunyikan dari WhatsApp Bot!`, 'success');
+          }
+        }
+        return;
+      }
+
+      // 2. Cancel / Release Occupied Slot back to Available
+      const cancelBtn = e.target.closest('.btn-slot-cancel');
+      if (cancelBtn) {
+        const card = cancelBtn.closest('.slot-card');
+        if (!card) return;
+        const time = card.getAttribute('data-time') || '';
+        const patient = card.getAttribute('data-patient') || 'pasien ini';
+
+        if (confirm(`Apakah Anda yakin ingin membatalkan/mengosongkan slot jam ${time} (${patient})?\nSlot ini akan langsung dibuka kembali untuk pemesanan bot WhatsApp.`)) {
+          card.setAttribute('data-status', 'available');
+          card.removeAttribute('data-patient');
+          card.style.background = 'rgba(16, 185, 129, 0.08)';
+          card.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+
+          const timeEl = card.querySelector('.slot-time');
+          if (timeEl) timeEl.style.color = '#10B981';
+
+          const badgeEl = card.querySelector('.slot-badge');
+          if (badgeEl) {
+            badgeEl.className = 'badge slot-badge';
+            badgeEl.style.background = 'rgba(16, 185, 129, 0.2)';
+            badgeEl.style.color = '#10B981';
+            badgeEl.textContent = 'TERSEDIA';
+          }
+
+          const patientEl = card.querySelector('.slot-patient');
+          if (patientEl) {
+            patientEl.style.color = '#10B981';
+            patientEl.style.fontWeight = '600';
+            patientEl.textContent = 'Slot Kosong';
+          }
+
+          const metaEl = card.querySelector('.slot-meta');
+          if (metaEl) {
+            metaEl.textContent = 'Tersedia di WhatsApp Bot & Loket';
+          }
+
+          // Replace buttons
+          const actionContainer = cancelBtn.parentElement;
+          if (actionContainer) {
+            actionContainer.innerHTML = `
+              <button class="btn btn-primary btn-book-manual" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;">+ Daftarkan Pasien</button>
+              <button class="btn btn-secondary btn-lock-slot" style="padding: 4px 8px; font-size: 0.72rem;">Kunci</button>
+            `;
+          }
+
+          updateOccupiedSummary(currentDoctor);
+          if (window.showToast) {
+            window.showToast(`🔄 Slot jam ${time} berhasil dikosongkan. Tersedia kembali di WhatsApp Bot!`, 'info');
+          }
+        }
+        return;
+      }
+
+      // 3. Lock / Unlock Slot
+      const lockBtn = e.target.closest('.btn-lock-slot');
+      if (lockBtn) {
+        const card = lockBtn.closest('.slot-card');
+        if (!card) return;
+        const time = card.getAttribute('data-time') || '';
+        const currentStatus = card.getAttribute('data-status');
+
+        if (currentStatus === 'available') {
+          card.setAttribute('data-status', 'break');
+          card.style.background = 'var(--bg-surface-alt)';
+          card.style.border = '1px dashed var(--border-subtle)';
+
+          const timeEl = card.querySelector('.slot-time');
+          if (timeEl) timeEl.style.color = 'var(--text-muted)';
+
+          const badgeEl = card.querySelector('.slot-badge');
+          if (badgeEl) {
+            badgeEl.style.background = 'rgba(100, 116, 139, 0.15)';
+            badgeEl.style.color = 'var(--text-muted)';
+            badgeEl.textContent = 'TERKUNCI';
+          }
+
+          const patientEl = card.querySelector('.slot-patient');
+          if (patientEl) {
+            patientEl.style.color = 'var(--text-muted)';
+            patientEl.textContent = 'Slot Dikunci Admin';
+          }
+
+          lockBtn.textContent = 'Buka';
+          if (window.showToast) {
+            window.showToast(`🔒 Slot jam ${time} telah dikunci sementara.`, 'info');
+          }
+        } else {
+          card.setAttribute('data-status', 'available');
+          card.style.background = 'rgba(16, 185, 129, 0.08)';
+          card.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+
+          const timeEl = card.querySelector('.slot-time');
+          if (timeEl) timeEl.style.color = '#10B981';
+
+          const badgeEl = card.querySelector('.slot-badge');
+          if (badgeEl) {
+            badgeEl.style.background = 'rgba(16, 185, 129, 0.2)';
+            badgeEl.style.color = '#10B981';
+            badgeEl.textContent = 'TERSEDIA';
+          }
+
+          const patientEl = card.querySelector('.slot-patient');
+          if (patientEl) {
+            patientEl.style.color = '#10B981';
+            patientEl.textContent = 'Slot Kosong';
+          }
+
+          lockBtn.textContent = 'Kunci';
+          if (window.showToast) {
+            window.showToast(`🔓 Slot jam ${time} telah dibuka kembali.`, 'success');
+          }
+        }
+        updateOccupiedSummary(currentDoctor);
+        return;
+      }
+    });
+
+    // Refresh WhatsApp Status Button
+    const btnRefresh = document.getElementById('btn-refresh-slots');
+    if (btnRefresh) {
+      btnRefresh.addEventListener('click', () => {
+        btnRefresh.disabled = true;
+        btnRefresh.textContent = '🔄 Menyinkronkan...';
+        setTimeout(() => {
+          btnRefresh.disabled = false;
+          btnRefresh.textContent = '🔄 Sinkronisasi Status WhatsApp';
+          updateOccupiedSummary(currentDoctor);
+          if (window.showToast) {
+            window.showToast('✅ Sinkronisasi Bot WhatsApp Berhasil: Jam occupied disembunyikan secara real-time!', 'success');
+          }
+        }, 600);
+      });
+    }
+
+    // Initial render
+    updateOccupiedSummary('hendra');
+
+    // Strict RBAC Forbidden Modal Trigger
+    const rbacModal = document.getElementById('admin-rbac-modal');
+    const closeRbacBtn = document.getElementById('btn-close-rbac-modal');
+    const understandRbacBtn = document.getElementById('btn-understand-rbac');
+
+    document.querySelectorAll('.btn-test-blocked').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        rbacModal.classList.add('active');
+        if (window.showToast) {
+          window.showToast('⛔ Akses Rekam Medis Ditolak (HTTP 403 Forbidden)', 'error');
+        }
+      });
+    });
+
+    [closeRbacBtn, understandRbacBtn].forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', () => {
+          rbacModal.classList.remove('active');
+        });
+      }
+    });
+
+    rbacModal.addEventListener('click', (e) => {
+      if (e.target === rbacModal) {
+        rbacModal.classList.remove('active');
+      }
+    });
+  </script>
+</body>
+</html>
