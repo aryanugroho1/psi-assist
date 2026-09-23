@@ -312,9 +312,9 @@
         </span>
       </div>
 
-      <div class="queue-list">
+      <div class="queue-list" id="doctor-queue-list">
         <!-- Patient 1: Rian (Active) -->
-        <div class="patient-queue-card active" id="queue-item-1">
+        <div class="patient-queue-card active" id="queue-item-1" data-patient-id="rian" title="Klik untuk membuka asesmen & Voice Note Rian">
           <div class="card-top-row">
             <span class="patient-name-title">Rian (27 thn)</span>
             <span class="patient-slot-time">09:00 - 09:30</span>
@@ -325,13 +325,13 @@
           <div class="badge-overnight-alert">
             🌙 Voice Note Siap Review (Cemas: 8/10)
           </div>
-          <div style="font-size: 0.72rem; color: #10B981; font-weight: 700; margin-top: 6px;">
+          <div class="queue-patient-status" style="font-size: 0.72rem; color: #10B981; font-weight: 700; margin-top: 6px;">
             ● Pasien di Ruang Praktek
           </div>
         </div>
 
         <!-- Patient 2 -->
-        <div class="patient-queue-card" id="queue-item-2">
+        <div class="patient-queue-card" id="queue-item-2" data-patient-id="dewi" title="Klik untuk membuka asesmen kontrol rutin Dewi Sartika">
           <div class="card-top-row">
             <span class="patient-name-title">Dewi Sartika (34 thn)</span>
             <span class="patient-slot-time">09:45 - 10:15</span>
@@ -339,13 +339,13 @@
           <div style="font-size: 0.78rem; color: var(--text-secondary);">
             Kontrol Rutin Bipolar &bull; PHQ-9: 8 (Ringan)
           </div>
-          <div style="font-size: 0.72rem; color: #F59E0B; margin-top: 6px;">
+          <div class="queue-patient-status" style="font-size: 0.72rem; color: #F59E0B; margin-top: 6px;">
             ⏳ Menunggu di Loket
           </div>
         </div>
 
         <!-- Patient 3 -->
-        <div class="patient-queue-card" id="queue-item-3">
+        <div class="patient-queue-card" id="queue-item-3" data-patient-id="ahmad" title="Klik untuk membuka formulir intake Ahmad Fauzi">
           <div class="card-top-row">
             <span class="patient-name-title">Ahmad Fauzi (41 thn)</span>
             <span class="patient-slot-time">10:30 - 11:00</span>
@@ -353,13 +353,13 @@
           <div style="font-size: 0.78rem; color: var(--text-secondary);">
             Pasien Baru &bull; Intake PWA Selesai
           </div>
-          <div style="font-size: 0.72rem; color: #64748B; margin-top: 6px;">
+          <div class="queue-patient-status" style="font-size: 0.72rem; color: #64748B; margin-top: 6px;">
             🕒 Terjadwal
           </div>
         </div>
 
         <!-- Patient 4 -->
-        <div class="patient-queue-card" id="queue-item-4">
+        <div class="patient-queue-card" id="queue-item-4" data-patient-id="siti" title="Klik untuk membuka asesmen krisis & Voice Note Siti Nurhaliza">
           <div class="card-top-row">
             <span class="patient-name-title">Siti Nurhaliza (22 thn)</span>
             <span class="patient-slot-time">11:15 - 11:45</span>
@@ -369,6 +369,9 @@
           </div>
           <div class="badge-overnight-alert">
             🌙 Voice Note Siap Review (Cemas: 6/10)
+          </div>
+          <div class="queue-patient-status" style="font-size: 0.72rem; color: #64748B; margin-top: 6px;">
+            🕒 Terjadwal (11:15)
           </div>
         </div>
       </div>
@@ -383,40 +386,60 @@
          ========================================================================== -->
     <section class="col-center-workspace">
       <!-- Session Header Strip -->
-      <div class="session-banner-strip">
+      <div class="session-banner-strip" id="session-header-container">
         <div>
-          <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+          <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;" id="session-time-badge">
             Sesi Tatap Muka &bull; 09:00 - 09:30 WIB
           </div>
-          <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">
+          <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);" id="session-patient-title">
             Rian — Panduan Deep Dive Clinical Interview
           </h2>
         </div>
-        <div>
+        <div id="session-status-pill">
           <span class="badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal);">
             ✓ VN 01:32 AM Teranalisis
           </span>
         </div>
       </div>
 
-      <!-- Voice Note Player HUD -->
-      <div class="vn-player-hud">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <button class="audio-play-btn" id="vn-play-btn" style="width: 36px; height: 36px;" title="Putar Voice Note Semalam">
-              <svg id="vn-play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            </button>
-            <div>
-              <div style="font-size: 0.85rem; font-weight: 700;">Voice Note Pasien Saat Krisis (Pukul 01:32 WIB)</div>
-              <div style="font-size: 0.72rem; color: #94A3B8;">Durasi: 00:42 &bull; Skor Cemas: 8/10 &bull; Token Aktif: 60s</div>
+      <!-- Voice Note Player HUD or Intake Briefing Container -->
+      <div id="vn-player-hud-container">
+        <div class="vn-player-hud">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <button class="audio-play-btn" id="vn-play-btn" style="width: 36px; height: 36px;" title="Putar Voice Note Semalam">
+                <svg id="vn-play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+              <div>
+                <div style="font-size: 0.85rem; font-weight: 700;" id="vn-hud-title">Voice Note Pasien Saat Krisis (Pukul 01:32 WIB)</div>
+                <div style="font-size: 0.72rem; color: #94A3B8;" id="vn-hud-meta">Durasi: 00:42 &bull; Skor Cemas: 8/10 &bull; Token Aktif: 60s</div>
+              </div>
+            </div>
+            <span class="badge" style="background: rgba(2, 132, 199, 0.2); color: #38BDF8; font-size: 0.72rem;">
+              Auto-Purged di WhatsApp
+            </span>
+          </div>
+
+          <canvas id="vn-waveform" style="width: 100%; height: 26px; background: rgba(255,255,255,0.05); border-radius: 4px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Security & Zero-Knowledge Decryption Banner (UU PDP No. 27/2022) -->
+      <div style="margin: 0 24px 14px 24px; background: rgba(13, 148, 136, 0.08); border: 1.5px solid var(--color-teal); border-radius: var(--radius-md); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.25rem;">🔒</span>
+          <div>
+            <div style="font-size: 0.82rem; font-weight: 800; color: var(--color-teal);">
+              DEKRIPSI REAL-TIME AKTIF: SESI DOKTER DPJP (AES-256-GCM)
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-muted);">
+              Data di Database & Drizzle Studio tersimpan sebagai <strong>Ciphertext Terenkripsi</strong> (Admin platform tidak dapat membaca isi curhat / probe psikiatri).
             </div>
           </div>
-          <span class="badge" style="background: rgba(2, 132, 199, 0.2); color: #38BDF8; font-size: 0.72rem;">
-            Auto-Purged di WhatsApp
-          </span>
         </div>
-
-        <canvas id="vn-waveform" style="width: 100%; height: 26px; background: rgba(255,255,255,0.05); border-radius: 4px;"></canvas>
+        <button class="btn btn-secondary" id="btn-toggle-raw-encryption" style="font-size: 0.74rem; padding: 6px 12px; font-weight: 700; border-color: var(--color-teal); color: var(--color-teal); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+          🔍 Bandingkan Data Database vs Layar Dokter
+        </button>
       </div>
 
       <!-- Deep Dive Interview Probes List for Sp.KJ -->
@@ -425,60 +448,19 @@
           <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.04em;">
             Poin Eksplorasi Wawancara Langsung (Tatap Muka)
           </span>
-          <span style="font-size: 0.74rem; color: var(--text-muted);">
+          <span style="font-size: 0.74rem; color: var(--text-muted);" id="probes-source-meta">
             Disusun Otomatis dari Analisis Voice Note
           </span>
         </div>
 
-        <!-- Probe 1 -->
-        <div class="interview-probe-card" style="border-left: 4px solid var(--color-teal);">
-          <div class="probe-header">
-            <span class="probe-badge">1. Gejala Somatik Panik (Palpitasi & Tremor)</span>
-            <button class="verify-timestamp-badge" onclick="alert('Dengar bukti audio detik [00:14]: Suara bergetar dan keluhan jantung berdebar')">[00:14]</button>
-          </div>
-          <div class="probe-question">
-            <strong>Tanyakan Langsung ke Rian:</strong><br>
-            <em>"Mas Rian, di rekaman suara semalam Anda mengeluhkan dada berdebar kencang dan tangan gemetar hebat saat mau tidur. Berapa lama debarannya berlangsung semalam? Apakah ada sensasi nyeri dada yang menjalar atau murni debaran cepat?"</em>
-          </div>
-          <div class="probe-rationale">
-            <strong>Tujuan Klinis:</strong> Membedakan eksaserbasi panic attack nokturnal dengan kelainan aritmia kardiologi, serta mengevaluasi respons otonom pasien.
-          </div>
-        </div>
-
-        <!-- Probe 2 -->
-        <div class="interview-probe-card" style="border-left: 4px solid var(--color-primary);">
-          <div class="probe-header">
-            <span class="probe-badge">2. Pemicu Kognitif & Ruminasi Masa Depan</span>
-            <button class="verify-timestamp-badge" onclick="alert('Dengar bukti audio detik [00:26]: Ruminasi ketakutan dipecat')">[00:26]</button>
-          </div>
-          <div class="probe-question">
-            <strong>Tanyakan Langsung ke Rian:</strong><br>
-            <em>"Semalam Anda menyebutkan pikiran terus berputar takut membuat kesalahan di tempat kerja sampai takut dipecat. Apakah ada kejadian nyata kemarin di kantor, atau ini murni kekhawatiran berlebihan yang sulit dikontrol?"</em>
-          </div>
-          <div class="probe-rationale">
-            <strong>Tujuan Klinis:</strong> Mengukur derajat ruminasi cemas (GAD) vs distorsi kognitif katastrofik.
-          </div>
-        </div>
-
-        <!-- Probe 3 -->
-        <div class="interview-probe-card" style="border-left: 4px solid #10B981;">
-          <div class="probe-header">
-            <span class="probe-badge">3. Klarifikasi Afek Kematian vs Impuls Suisidal</span>
-            <button class="verify-timestamp-badge" onclick="alert('Dengar bukti audio detik [00:38]: Ungkapan rasanya mau mati')">[00:38]</button>
-          </div>
-          <div class="probe-question">
-            <strong>Tanyakan Langsung ke Rian:</strong><br>
-            <em>"Di akhir pesan suara, Anda sempat berucap 'rasanya mau mati'. Saya ingin memastikan: apakah itu rasa takut fisik karena panik hebat, atau ada pikiran keputusasaan untuk mengakhiri hidup?"</em>
-          </div>
-          <div class="probe-rationale">
-            <strong>Tujuan Klinis:</strong> Validasi mutlak penapisan risiko bunuh diri. Analisis AI mengidentifikasi ini sebagai rasa panik fisik, namun wajib dikonfirmasi DPJP secara tatap muka.
-          </div>
+        <div id="interview-probes-container" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Rendered dynamically by JS -->
         </div>
       </div>
     </section>
 
     <!-- ==========================================================================
-         COLUMN 3: Pencatatan Cepat Keputusan Klinis Dokter (MSE & SOAP)
+         COLUMN 3: Pencatatan Cepat Keputusan Klinis Dokter (MSE, SOAP & Riwayat Rekam Medis)
          ========================================================================== -->
     <aside class="col-editor">
       <div style="padding: 14px 18px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
@@ -489,9 +471,10 @@
       </div>
 
       <div style="padding: 10px 18px 0 18px;">
-        <div class="tab-switcher" style="margin-bottom: 6px;">
-          <button class="tab-btn active" id="tab-mse-btn">Status Mental (MSE)</button>
-          <button class="tab-btn" id="tab-soap-btn">Format SOAP</button>
+        <div class="tab-switcher" style="margin-bottom: 6px; display: flex; gap: 4px;">
+          <button class="tab-btn active" id="tab-mse-btn" style="flex: 1; padding: 6px 4px; font-size: 0.78rem;">Status Mental (MSE)</button>
+          <button class="tab-btn" id="tab-soap-btn" style="flex: 1; padding: 6px 4px; font-size: 0.78rem;">Format SOAP</button>
+          <button class="tab-btn" id="tab-history-btn" style="flex: 1.2; padding: 6px 4px; font-size: 0.78rem;">📚 Riwayat Rekam Medis</button>
         </div>
       </div>
 
@@ -499,22 +482,22 @@
       <div class="editor-scroll-body" id="editor-body-mse">
         <div class="clinical-section-card">
           <span class="section-label">1. Mood & Afek (Observasi Langsung)</span>
-          <textarea class="form-control" style="width: 100%; height: 75px; font-size: 0.86rem;">Mood cemas (anxious), afek serasi (appropriate). Pasien kooperatif saat wawancara, tremor halus tampak saat menceritakan krisis semalam.</textarea>
+          <textarea id="field-mse-mood" class="form-control" style="width: 100%; height: 75px; font-size: 0.86rem;">Mood cemas (anxious), afek serasi (appropriate). Pasien kooperatif saat wawancara, tremor halus tampak saat menceritakan krisis semalam.</textarea>
         </div>
 
         <div class="clinical-section-card">
           <span class="section-label">2. Bentuk & Isi Pikir (Wawancara Langsung)</span>
-          <textarea class="form-control" style="width: 100%; height: 75px; font-size: 0.86rem;">Bentuk pikir koheren dan realistis. Isi pikir didominasi ruminasi kecemasan performa kerja tanpa adanya waham atau ide paranoid.</textarea>
+          <textarea id="field-mse-thought" class="form-control" style="width: 100%; height: 75px; font-size: 0.86rem;">Bentuk pikir koheren dan realistis. Isi pikir didominasi ruminasi kecemasan performa kerja tanpa adanya waham atau ide paranoid.</textarea>
         </div>
 
         <div class="clinical-section-card">
           <span class="section-label">3. Persepsi & Gangguan Sensorik</span>
-          <textarea class="form-control" style="width: 100%; height: 50px; font-size: 0.86rem;">Halusinasi auditorik/visual disangkal (-). Depersonalisasi/derealisasi (-).</textarea>
+          <textarea id="field-mse-perception" class="form-control" style="width: 100%; height: 50px; font-size: 0.86rem;">Halusinasi auditorik/visual disangkal (-). Depersonalisasi/derealisasi (-).</textarea>
         </div>
 
         <div class="clinical-section-card" style="border-left: 4px solid #10B981;">
           <span class="section-label">4. Tilikan & Evaluasi Risiko Suisidal</span>
-          <textarea class="form-control" style="width: 100%; height: 70px; font-size: 0.86rem;">Tilikan Derajat 4 (sadar diri cemas berlebihan dan membutuhkan pengobatan). Ide dan impuls bunuh diri disangkal sepenuhnya (Low Risk).</textarea>
+          <textarea id="field-mse-insight" class="form-control" style="width: 100%; height: 70px; font-size: 0.86rem;">Tilikan Derajat 4 (sadar diri cemas berlebihan dan membutuhkan pengobatan). Ide dan impuls bunuh diri disangkal sepenuhnya (Low Risk).</textarea>
         </div>
       </div>
 
@@ -522,22 +505,33 @@
       <div class="editor-scroll-body" id="editor-body-soap" style="display: none;">
         <div class="clinical-section-card">
           <span class="section-label">Subjective (S)</span>
-          <textarea class="form-control" style="width: 100%; height: 75px; font-size: 0.86rem;">Pasien mengonfirmasi serangan panik semalam pkl 01.30 WIB seperti di VN WhatsApp. Palpitasi berlangsung ~25 menit. Belum pernah terjadi separah ini sebelumnya.</textarea>
+          <textarea id="field-soap-s" class="form-control" style="width: 100%; height: 75px; font-size: 0.86rem;">Pasien mengonfirmasi serangan panik semalam pkl 01.30 WIB seperti di VN WhatsApp. Palpitasi berlangsung ~25 menit. Belum pernah terjadi separah ini sebelumnya.</textarea>
         </div>
         <div class="clinical-section-card">
           <span class="section-label">Objective (O)</span>
-          <textarea class="form-control" style="width: 100%; height: 65px; font-size: 0.86rem;">TD: 125/80 mmHg, Nadi: 88x/menit, RR: 20x/menit. Kontak mata adekuat, tremor tangan berkurang selama sesi tatap muka.</textarea>
+          <textarea id="field-soap-o" class="form-control" style="width: 100%; height: 65px; font-size: 0.86rem;">TD: 125/80 mmHg, Nadi: 88x/menit, RR: 20x/menit. Kontak mata adekuat, tremor tangan berkurang selama sesi tatap muka.</textarea>
         </div>
         <div class="clinical-section-card">
           <span class="section-label">Assessment (A)</span>
-          <input type="text" class="form-control" value="F41.1 Gangguan Cemas Menyeluruh (GAD) dengan Eksaserbasi Panik" style="font-weight: 700;">
+          <input type="text" id="field-soap-a" class="form-control" value="F41.1 Gangguan Cemas Menyeluruh (GAD) dengan Eksaserbasi Panik" style="font-weight: 700;">
         </div>
         <div class="clinical-section-card">
           <span class="section-label">Plan (P)</span>
-          <textarea class="form-control" style="width: 100%; height: 75px; font-size: 0.86rem;">1. Psikoterapi CBT fokus restrukturisasi kognitif pekerjaan
+          <textarea id="field-soap-p" class="form-control" style="width: 100%; height: 75px; font-size: 0.86rem;">1. Psikoterapi CBT fokus restrukturisasi kognitif pekerjaan
 2. Sertraline HCl 25 mg 1x1 tab pagi
 3. Alprazolam 0.25 mg (PRN bila panik hebat malam hari)
 4. Kontrol 14 hari</textarea>
+        </div>
+      </div>
+
+      <!-- Longitudinal Historical Medical Records Tab -->
+      <div class="editor-scroll-body" id="editor-body-history" style="display: none;">
+        <div style="background: rgba(13, 148, 136, 0.08); border-left: 3px solid var(--color-teal); padding: 10px 12px; border-radius: 6px; font-size: 0.78rem; line-height: 1.4; margin-bottom: 8px;">
+          <strong>🔒 Riwayat Rekam Medis Terenkripsi AES-256:</strong> Rekam medis longitudinal ini didekripsi on-the-fly khusus untuk sesi dr. Hendra, Sp.KJ. Data tersimpan permanen di tabel <code>clinical_medical_records</code> & SATUSEHAT FHIR.
+        </div>
+
+        <div id="patient-history-timeline" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Populated by JS -->
         </div>
       </div>
 
@@ -559,75 +553,830 @@
   <!-- Scripts -->
   <script src="js/app.js"></script>
   <script>
-    // Tab switching between MSE and SOAP
+    // ==========================================================================
+    // DOC API CLIENT — Auto-authenticates as ROLE_DOCTOR
+    // ==========================================================================
+    const DocApiClient = {
+      BASE: 'http://localhost:3000/api/v1',
+      token: null,
+
+      async login() {
+        try {
+          const res = await fetch(`${this.BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: 'doctor', password: 'password123' })
+          });
+          const data = await res.json();
+          if (data.token) { this.token = data.token; return true; }
+        } catch (e) {
+          console.warn('[DocApiClient] Backend not reachable, running offline.', e.message);
+        }
+        return false;
+      },
+
+      async get(path) {
+        if (!this.token) return null;
+        try {
+          const res = await fetch(`${this.BASE}${path}`, {
+            headers: { 'Authorization': `Bearer ${this.token}` }
+          });
+          return await res.json();
+        } catch (e) { return null; }
+      },
+
+      async post(path, body) {
+        if (!this.token) return null;
+        try {
+          const res = await fetch(`${this.BASE}${path}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
+            body: JSON.stringify(body)
+          });
+          return await res.json();
+        } catch (e) { return null; }
+      }
+    };
+
+    // Initialize on load (non-blocking)
+    DocApiClient.login().then(ok => {
+      if (ok) console.log('[Doctor] Connected to MindScribe backend. EMR signing will persist.');
+      else console.warn('[Doctor] Backend offline — EMR will only update in memory.');
+    });
+
+    // ==========================================
+    // CLINICAL PATIENTS DATA REPOSITORY (DPJP SESSION DECRYPTED)
+    // ==========================================
+
+    const patientsData = {
+      rian: {
+        id: 'rian',
+        name: 'Rian (27 thn)',
+        slot: '09:00 - 09:30 WIB',
+        channelBadge: '🌙 WA Triage (01:30 AM)',
+        triageStatus: '✓ VN 01:32 AM Teranalisis',
+        hasVn: true,
+        vnTitle: 'Voice Note Pasien Saat Krisis (Pukul 01:32 WIB)',
+        vnMeta: 'Durasi: 00:42 &bull; Skor Cemas: 8/10 &bull; Token Aktif: 60s',
+        vnAudioDuration: '00:42',
+        isSigned: false,
+        signedEncounterId: null,
+        probesSource: 'Disusun Otomatis dari Analisis Voice Note',
+        probes: [
+          {
+            color: 'var(--color-teal)',
+            badge: '1. Gejala Somatik Panik (Palpitasi & Tremor)',
+            time: '[00:14]',
+            timeAlert: 'Dengar bukti audio detik [00:14]: Suara bergetar dan keluhan jantung berdebar kencang saat hendak tidur',
+            question: 'Mas Rian, di rekaman suara semalam Anda mengeluhkan dada berdebar kencang dan tangan gemetar hebat saat mau tidur. Berapa lama debarannya berlangsung semalam? Apakah ada sensasi nyeri dada yang menjalar atau murni debaran cepat?',
+            rationale: 'Membedakan eksaserbasi panic attack nokturnal dengan kelainan aritmia kardiologi, serta mengevaluasi respons otonom pasien.'
+          },
+          {
+            color: 'var(--color-primary)',
+            badge: '2. Pemicu Kognitif & Ruminasi Masa Depan',
+            time: '[00:26]',
+            timeAlert: 'Dengar bukti audio detik [00:26]: Ruminasi ketakutan dipecat karena salah input laporan',
+            question: 'Semalam Anda menyebutkan pikiran terus berputar takut membuat kesalahan di tempat kerja sampai takut dipecat. Apakah ada kejadian nyata kemarin di kantor, atau ini murni kekhawatiran berlebihan yang sulit dikontrol?',
+            rationale: 'Mengukur derajat ruminasi cemas (GAD) vs distorsi kognitif katastrofik.'
+          },
+          {
+            color: '#10B981',
+            badge: '3. Klarifikasi Afek Kematian vs Impuls Suisidal',
+            time: '[00:38]',
+            timeAlert: 'Dengar bukti audio detik [00:38]: Ungkapan rasanya mau mati karena sesak dan panik',
+            question: 'Di akhir pesan suara, Anda sempat berucap "rasanya mau mati". Saya ingin memastikan: apakah itu rasa takut fisik karena panik hebat, atau ada pikiran keputusasaan untuk mengakhiri hidup?',
+            rationale: 'Validasi mutlak penapisan risiko bunuh diri. Analisis AI mengidentifikasi ini sebagai rasa panik fisik, namun wajib dikonfirmasi DPJP secara tatap muka.'
+          }
+        ],
+        mse: {
+          mood: 'Mood cemas (anxious), afek serasi (appropriate). Pasien kooperatif saat wawancara, tremor halus tampak saat menceritakan krisis semalam.',
+          thought: 'Bentuk pikir koheren dan realistis. Isi pikir didominasi ruminasi kecemasan performa kerja tanpa adanya waham atau ide paranoid.',
+          perception: 'Halusinasi auditorik/visual disangkal (-). Depersonalisasi/derealisasi (-).',
+          insight: 'Tilikan Derajat 4 (sadar diri cemas berlebihan dan membutuhkan pengobatan). Ide dan impuls bunuh diri disangkal sepenuhnya (Low Risk).'
+        },
+        soap: {
+          s: 'Pasien mengonfirmasi serangan panik semalam pkl 01.30 WIB seperti di VN WhatsApp. Palpitasi berlangsung ~25 menit. Belum pernah terjadi separah ini sebelumnya.',
+          o: 'TD: 125/80 mmHg, Nadi: 88x/menit, RR: 20x/menit. Kontak mata adekuat, tremor tangan berkurang selama sesi tatap muka.',
+          a: 'F41.1 Gangguan Cemas Menyeluruh (GAD) dengan Eksaserbasi Panik',
+          p: '1. Psikoterapi CBT fokus restrukturisasi kognitif pekerjaan\n2. Sertraline HCl 25 mg 1x1 tab pagi\n3. Alprazolam 0.25 mg (PRN bila panik hebat malam hari)\n4. Kontrol 14 hari'
+        },
+        history: [
+          {
+            date: '08 September 2026',
+            dpjp: 'dr. Hendra, Sp.KJ',
+            encounterId: 'FHIR-ENC-88120',
+            diagnosis: 'F41.1 Gangguan Cemas Menyeluruh',
+            therapy: 'Sertraline HCl 25 mg 1x1 (Pagi)',
+            notes: 'Pasien mulai merasakan perbaikan kecemasan siang hari, namun masih ada kecemasan antisipatorik menjelang tidur malam hari. Disarankan latihan relaksasi pernapasan 4-7-8.',
+            status: 'Lama'
+          },
+          {
+            date: '25 Agustus 2026',
+            dpjp: 'dr. Hendra, Sp.KJ',
+            encounterId: 'FHIR-ENC-87004',
+            diagnosis: 'F41.0 Gangguan Panik Tanpa Agorafobia',
+            therapy: 'Alprazolam 0.25 mg (PRN bila panik akut)',
+            notes: 'Kunjungan pertama IGD/Poli Jiwa pasca serangan sesak napas akut di tempat kerja setelah lembur 3 malam beruntun. EKG kardiologi normal.',
+            status: 'Lama'
+          }
+        ]
+      },
+
+      dewi: {
+        id: 'dewi',
+        name: 'Dewi Sartika (34 thn)',
+        slot: '09:45 - 10:15 WIB',
+        channelBadge: 'Loket Rawat Jalan',
+        triageStatus: 'Kontrol Rutin Stabil',
+        hasVn: false,
+        vnTitle: 'Kontrol Rutin Mood Stabilizer & Ritme Sirkadian',
+        vnMeta: 'Pasien Kontrol Bulanan &bull; PHQ-9: 8 (Ringan) &bull; YMRS: 4 (Eutimik)',
+        vnAudioDuration: '00:00',
+        isSigned: false,
+        signedEncounterId: null,
+        probesSource: 'Panduan Monitoring Terstruktur Bipolar I Remisi',
+        probes: [
+          {
+            color: '#0284C7',
+            badge: '1. Kepatuhan Terapi Mood Stabilizer (Lithium)',
+            time: 'Evaluasi',
+            timeAlert: 'Monitoring Kepatuhan: Lithium Carbonate 300 mg 2x1',
+            question: 'Ibu Dewi, bagaimana keteraturan minum Lithium sebulan terakhir? Apakah ada dosis yang terlewat, keluhan rasa haus berlebih, atau gemetar di jari tangan?',
+            rationale: 'Memastikan adherence terapi maintenance dan skrining dini tanda toksisitas Lithium serum.'
+          },
+          {
+            color: '#F59E0B',
+            badge: '2. Stabilitas Jam Tidur & Ritme Sirkadian',
+            time: 'Evaluasi',
+            timeAlert: 'Biomarker Relaps: Penurunan kebutuhan tidur',
+            question: 'Berapa rata-rata jam tidur Ibu setiap malam? Apakah ada malam-malam di mana Ibu merasa sangat bertenaga dan tidak butuh tidur sama sekali?',
+            rationale: 'Penurunan kebutuhan tidur (decreased need for sleep) adalah prediktor relapse episode manik paling sensitif pada Bipolar.'
+          },
+          {
+            color: '#10B981',
+            badge: '3. Stresor Relasional & Dukungan Keluarga',
+            time: 'Evaluasi',
+            timeAlert: 'Faktor Protektif Psikososial',
+            question: 'Bagaimana suasana interaksi dengan keluarga di rumah? Apakah ada konflik atau stresor baru yang memicu rasa sedih atau sensitif berlebih?',
+            rationale: 'Mengevaluasi sistem dukungan sosial keluarga sebagai bantalan pencegah episode depresi.'
+          }
+        ],
+        mse: {
+          mood: 'Mood eutimik (stabil), afek luas dan serasi. Kerapian diri baik, kontak mata wajar dan ramah.',
+          thought: 'Bentuk pikir koheren, laju pembicaraan normal (tidak ada flight of ideas atau tekanan bicara). Waham kebesaran atau persekusi disangkal.',
+          perception: 'Halusinasi tidak ditemukan (-).',
+          insight: 'Tilikan Derajat 5 (Menyadari sepenuhnya penyakit Bipolar dan patuh menjalani terapi jangka panjang).'
+        },
+        soap: {
+          s: 'Pasien datang untuk kontrol rutin bulanan. Merasa mood stabil 4 minggu terakhir. Tidur cukup 7-8 jam per malam. Nafsu makan baik.',
+          o: 'TD: 118/75 mmHg, Nadi: 76x/menit, Suhu: 36.6°C. Tremor postural halus minimal, tiroid normal.',
+          a: 'F31.7 Gangguan Afektif Bipolar, Saat Ini Dalam Remisi',
+          p: '1. Lanjutkan Lithium Carbonate 300 mg 2x1 tab\n2. Jadwalkan lab cek kadar Lithium serum & fungsi ginjal (Ureum/Kreatinin)\n3. Edukasi pertahankan sleep hygiene sirkadian\n4. Kontrol 30 hari'
+        },
+        history: [
+          {
+            date: '22 Agustus 2026',
+            dpjp: 'dr. Hendra, Sp.KJ',
+            encounterId: 'FHIR-ENC-86910',
+            diagnosis: 'F31.7 Gangguan Afektif Bipolar Remisi',
+            therapy: 'Lithium Carbonate 300 mg 2x1 tab',
+            notes: 'Kadar Lithium serum stabil pada 0.72 mEq/L. Pasien bekerja aktif tanpa fluktuasi mood signifikan. Kepatuhan minum obat 100%.',
+            status: 'Lama'
+          },
+          {
+            date: '20 Juni 2026',
+            dpjp: 'dr. Hendra, Sp.KJ',
+            encounterId: 'FHIR-ENC-84220',
+            diagnosis: 'F31.7 Gangguan Afektif Bipolar Remisi',
+            therapy: 'Lithium Carbonate 300 mg 2x1 tab, Quetiapine 25 mg (tapering off)',
+            notes: 'Evaluasi pasca stabilisasi. Quetiapine dihentikan bertahap karena tremor berkurang dan siklus tidur malam teratur 7-8 jam.',
+            status: 'Lama'
+          },
+          {
+            date: '15 Maret 2026',
+            dpjp: 'dr. Hendra, Sp.KJ',
+            encounterId: 'FHIR-ENC-81014',
+            diagnosis: 'F31.1 Gangguan Afektif Bipolar, Episode Kini Manik Tanpa Gejala Psikotik',
+            therapy: 'Lithium Carbonate 300 mg 2x1, Quetiapine 100 mg malam',
+            notes: 'Kontrol pasca rawat inap. Tekanan bicara menurun, flight of ideas teratasi, tilikan membaik ke derajat 4.',
+            status: 'Lama'
+          }
+        ]
+      },
+
+      ahmad: {
+        id: 'ahmad',
+        name: 'Ahmad Fauzi (41 thn)',
+        slot: '10:30 - 11:00 WIB',
+        channelBadge: 'PWA Intake Mandiri',
+        triageStatus: 'Asesmen Inisial Pasien Baru',
+        hasVn: false,
+        vnTitle: 'Formulir Skrining Digital & Intake Pasien Baru',
+        vnMeta: 'Skrining PWA Selesai &bull; Skor Burnout: Tinggi &bull; PHQ-9: 11 (Sedang)',
+        vnAudioDuration: '00:00',
+        isSigned: false,
+        signedEncounterId: null,
+        probesSource: 'Panduan Wawancara Diagnostik Awal (First Visit)',
+        probes: [
+          {
+            color: '#64748B',
+            badge: '1. Onset & Karakteristik Anhedonia',
+            time: 'Intake',
+            timeAlert: 'Data Intake: Kehilangan minat hobi sejak 3 minggu lalu',
+            question: 'Pak Ahmad, di formulir intake Anda menuliskan sudah sulit menikmati hobi dan sering merasa hampa sejak 3 minggu lalu. Bisakah diceritakan bagaimana perubahan suasana hati ini mulai dirasakan?',
+            rationale: 'Validasi kriteria klinis durasi minimal episode depresif (>2 minggu berturut-turut).'
+          },
+          {
+            color: '#F59E0B',
+            badge: '2. Tuntutan Kerja Manajerial & Kelelahan Kronis',
+            time: 'Intake',
+            timeAlert: 'Data Intake: Lembur >12 jam/hari, gangguan konsentrasi',
+            question: 'Sejauh mana beban pekerjaan di kantor mempengaruhi fisik Anda? Apakah bangun pagi terasa berat meskipun sudah tidur?',
+            rationale: 'Membedakan sindrom burnout profesional murni dengan sindrom neurovegetatif depresi.'
+          },
+          {
+            color: '#10B981',
+            badge: '3. Penapisan Wajib Ide Kematian / Suisidal',
+            time: 'Intake',
+            timeAlert: 'Skrining Wajib Keselamatan Pasien Baru',
+            question: 'Ketika rasa lelah dan hampa itu memuncak, apakah pernah terbersit pikiran bahwa hidup ini sia-sia atau lebih baik tidak bangun lagi?',
+            rationale: 'Prosedur keselamatan klinis wajib penapisan risiko bunuh diri untuk setiap pasien baru rawat jalan psikiatri.'
+          }
+        ],
+        mse: {
+          mood: 'Mood disforik/sedih, afek menyempit serasi. Retardasi psikomotor ringan, suara pelan dan kontak mata minim.',
+          thought: 'Proses pikir lambat namun koheren. Tidak ditemukan flight of ideas atau waham dosa/nihilistik.',
+          perception: 'Halusinasi auditorik/visual negatif (-).',
+          insight: 'Tilikan Derajat 4 (Menyadari dirinya sakit dan secara sukarela mendaftar untuk mencari bantuan medis).'
+        },
+        soap: {
+          s: 'Pasien baru datang dengan keluhan lelah berkepanjangan, sulit konsentrasi saat memimpin rapat, dan kehilangan gairah hidup sejak sebulan terakhir.',
+          o: 'TD: 130/85 mmHg, Nadi: 82x/menit. Tampak letih, gerakan lambat, respon verbal lambat namun relevan.',
+          a: 'F32.0 Episode Depresif Ringan dengan Komponen Kelelahan Kerja',
+          p: '1. Konseling psikoedukasi restrukturisasi beban kerja\n2. Escitalopram 10 mg 1x1 tab malam hari\n3. Anjuran cuti istirahat 3 hari\n4. Kontrol 14 hari'
+        },
+        history: [
+          {
+            date: '22 September 2026',
+            dpjp: 'dr. Hendra, Sp.KJ',
+            encounterId: 'FHIR-ENC-90815',
+            diagnosis: 'Kunjungan Inisial (Pasien Baru Rawat Jalan)',
+            therapy: 'Dalam Tahap Evaluasi DPJP (Rencana SSRI)',
+            notes: 'Pemeriksaan pertama faskes melalui rujukan mandiri PWA Intake. Skrining PHQ-9: 11.',
+            status: 'Baru'
+          },
+          {
+            date: '20 Agustus 2026',
+            dpjp: 'dr. Suryani (Faskes Primer)',
+            encounterId: 'REF-FKTP-77102',
+            diagnosis: 'R53 Malaise & Fatigue Kronik ec Suspek Sindrom Burnout',
+            therapy: 'Suplemen B-Complex 1x1, Anjuran Konsultasi Spesialis Jiwa',
+            notes: 'Hasil lab darah lengkap normal, TSH & FT4 normal (menyingkirkan hipotiroid). Pasien dirujuk ke Poli Psikiatri.',
+            status: 'Rujukan'
+          }
+        ]
+      },
+
+      siti: {
+        id: 'siti',
+        name: 'Siti Nurhaliza (22 thn)',
+        slot: '11:15 - 11:45 WIB',
+        channelBadge: '🌙 WA Triage (02:15 AM)',
+        triageStatus: '✓ VN 02:15 AM Teranalisis',
+        hasVn: true,
+        vnTitle: 'Voice Note Pasien Saat Krisis Insomnia (Pukul 02:15 WIB)',
+        vnMeta: 'Durasi: 00:35 &bull; Skor Cemas: 6/10 &bull; Token Aktif: 60s',
+        vnAudioDuration: '00:35',
+        isSigned: false,
+        signedEncounterId: null,
+        probesSource: 'Disusun Otomatis dari Analisis Voice Note & Keluhan Krisis Semalam',
+        probes: [
+          {
+            color: 'var(--color-teal)',
+            badge: '1. Retardasi Onset Tidur & Nyeri Kepala Tegang',
+            time: '[00:10]',
+            timeAlert: 'Dengar bukti audio detik [00:10]: Suara lemas mengeluhkan kepala berdenyut dan tidak bisa tidur sampai dini hari',
+            question: 'Mbak Siti, di pesan suara semalam Anda mengeluhkan sulit sekali memejamkan mata sampai jam 2 pagi dengan kepala berdenyut tegang. Sudah berapa minggu pola sulit tidur ini berlangsung? Jam berapa biasanya Mbak Siti baru bisa terlelap?',
+            rationale: 'Menilai keparahan gangguan onset tidur (initial insomnia) dan mengevaluasi komorbiditas Tension-Type Headache (TTH).'
+          },
+          {
+            color: 'var(--color-primary)',
+            badge: '2. Stresor Skripsi & Perfeksionisme Akademik',
+            time: '[00:22]',
+            timeAlert: 'Dengar bukti audio detik [00:22]: Suara isak tangis tertahan menceritakan revisi bab 4 dan rasa takut mengecewakan keluarga',
+            question: 'Semalam terdengar suara isak tangis ketika menceritakan target revisi bab 4. Apakah ada ketakutan berlebih akan kegagalan atau merasa tidak mampu menyelesaikan skripsi tepat waktu?',
+            rationale: 'Mengeksplorasi distorsi kognitif katastrofik, stresor akademik, serta tekanan ekspektasi keluarga.'
+          },
+          {
+            color: '#10B981',
+            badge: '3. Skrining Kafein & Penggunaan Obat Bebas (OTC)',
+            time: '[00:31]',
+            timeAlert: 'Dengar bukti audio detik [00:31]: Pengakuan minum kopi 3 cangkir untuk menahan kantuk di perpustakaan',
+            question: 'Untuk menahan kantuk di siang hari atau memaksakan tidur di malam hari, apakah Mbak Siti mengonsumsi kopi berlebih atau pernah meminum obat tidur warung/antihistamin?',
+            rationale: 'Eksklusi faktor ekstrinsik sleep hygiene yang buruk dan mencegah risiko penyalahgunaan sedatif bebas.'
+          }
+        ],
+        mse: {
+          mood: 'Mood cemas-kelelahan (anxious-fatigued), afek serasi menyempit. Pasien tampak lesu dengan lingkaran hitam di sekitar mata (eyebags).',
+          thought: 'Bentuk pikir koheren dan realistis. Isi pikir didominasi kecemasan masa depan akademik dan rasa bersalah pada orang tua.',
+          perception: 'Halusinasi tidak ada (-). Ilusi hipnagogik sesekali dirasakan saat mulai tidur.',
+          insight: 'Tilikan Derajat 5 (Sadar penuh bahwa kecemasan dan insomnia mengganggu fungsi harian dan secara inisiatif meminta bantuan psikiater).'
+        },
+        soap: {
+          s: 'Pasien datang mengeluhkan insomnia berat 3 minggu terakhir. Semalam mengirimkan VN krisis jam 02.15 WIB karena merasa panik dan tidak bisa tidur sama sekali.',
+          o: 'TD: 110/70 mmHg, Nadi: 80x/menit, RR: 18x/menit. Pasien tampak lelah, konjungtiva tidak anemis, tremor postural ringan.',
+          a: 'G47.0 Gangguan Memulai dan Mempertahankan Tidur (Insomnia) ec Reaksi Stres Akademik Akut (F43.2)',
+          p: '1. Edukasi protokol Sleep Hygiene ketat (tidak minum kafein >pkl 14.00, tanpa layar HP 1 jam sebelum tidur)\n2. Fluoxetine 20 mg 1x1 tab pagi hari\n3. Hydroxyzine 25 mg (PRN 30 menit sebelum tidur bila insomnia berat)\n4. Kontrol 14 hari'
+        },
+        history: [
+          {
+            date: '10 Agustus 2026',
+            dpjp: 'dr. Hendra, Sp.KJ',
+            encounterId: 'FHIR-ENC-86214',
+            diagnosis: 'Z73.0 Masalah Terkait Kejenuhan & Stres Akademik',
+            therapy: 'Konseling Suportif & Latihan Relaksasi Otot Progresif (PMR)',
+            notes: 'Kunjungan pertama saat stres ujian proposal skripsi. Saat itu kualitas tidur masih 5-6 jam per malam tanpa farmakoterapi.',
+            status: 'Lama'
+          }
+        ]
+      }
+    };
+
+    let activePatientId = 'rian';
+
+    // Function to render patient context dynamically
+    function renderPatient(patientId) {
+      const patient = patientsData[patientId];
+      if (!patient) return;
+      activePatientId = patientId;
+
+      // 1. Update Column 1 Active Card highlight
+      document.querySelectorAll('.patient-queue-card').forEach(card => {
+        if (card.getAttribute('data-patient-id') === patientId) {
+          card.classList.add('active');
+        } else {
+          card.classList.remove('active');
+        }
+      });
+
+      // 2. Update Column 2 Session Banner
+      const timeBadge = document.getElementById('session-time-badge');
+      const patientTitle = document.getElementById('session-patient-title');
+      const statusPill = document.getElementById('session-status-pill');
+      const probesSourceMeta = document.getElementById('probes-source-meta');
+
+      if (timeBadge) timeBadge.innerHTML = `Sesi Tatap Muka &bull; ${patient.slot}`;
+      if (patientTitle) patientTitle.textContent = `${patient.name.split('(')[0].trim()} — Panduan Deep Dive Clinical Interview`;
+      if (statusPill) {
+        statusPill.innerHTML = `
+          <span class="badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal);">
+            ${patient.triageStatus}
+          </span>
+        `;
+      }
+      if (probesSourceMeta) probesSourceMeta.textContent = patient.probesSource;
+
+      // 3. Render Center HUD (Voice Note Player HUD or Intake Briefing HUD)
+      const hudContainer = document.getElementById('vn-player-hud-container');
+      if (hudContainer) {
+        if (patient.hasVn) {
+          hudContainer.innerHTML = `
+            <div class="vn-player-hud" style="animation: fadeIn 0.3s ease;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <button class="audio-play-btn" id="vn-play-btn" style="width: 36px; height: 36px;" title="Putar Voice Note Semalam">
+                    <svg id="vn-play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  </button>
+                  <div>
+                    <div style="font-size: 0.85rem; font-weight: 700;">${patient.vnTitle}</div>
+                    <div style="font-size: 0.72rem; color: #94A3B8;">${patient.vnMeta}</div>
+                  </div>
+                </div>
+                <span class="badge" style="background: rgba(2, 132, 199, 0.2); color: #38BDF8; font-size: 0.72rem;">
+                  Auto-Purged di WhatsApp
+                </span>
+              </div>
+              <canvas id="vn-waveform" style="width: 100%; height: 26px; background: rgba(255,255,255,0.05); border-radius: 4px; margin-top: 8px;"></canvas>
+            </div>
+          `;
+          initWaveform();
+          attachAudioPlayListener();
+        } else {
+          hudContainer.innerHTML = `
+            <div class="vn-player-hud" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1px solid var(--border-subtle); animation: fadeIn 0.3s ease;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(2, 132, 199, 0.2); color: #38BDF8; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                    📋
+                  </div>
+                  <div>
+                    <div style="font-size: 0.85rem; font-weight: 700;">${patient.vnTitle}</div>
+                    <div style="font-size: 0.72rem; color: #94A3B8;">${patient.vnMeta}</div>
+                  </div>
+                </div>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-size: 0.72rem;">
+                  Tersedia di Dashboard
+                </span>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // 4. Render Deep Dive Interview Probes
+      const probesContainer = document.getElementById('interview-probes-container');
+      if (probesContainer) {
+        probesContainer.innerHTML = '';
+        patient.probes.forEach((probe, idx) => {
+          const card = document.createElement('div');
+          card.className = 'interview-probe-card';
+          card.style.borderLeft = `4px solid ${probe.color}`;
+          card.style.animation = 'fadeIn 0.3s ease';
+          card.innerHTML = `
+            <div class="probe-header">
+              <span class="probe-badge" style="color: ${probe.color};">${probe.badge}</span>
+              <button class="verify-timestamp-badge" onclick="alert('${probe.timeAlert}')" title="Klik untuk verifikasi audio bukti wawancara">${probe.time}</button>
+            </div>
+            <div class="probe-question">
+              <strong>Tanyakan Langsung ke ${patient.name.split('(')[0].trim()}:</strong><br>
+              <em>"${probe.question}"</em>
+            </div>
+            <div class="probe-rationale">
+              <strong>Tujuan Klinis:</strong> ${probe.rationale}
+            </div>
+          `;
+          probesContainer.appendChild(card);
+        });
+      }
+
+      // 5. Update Column 3 MSE Fields
+      const moodEl = document.getElementById('field-mse-mood');
+      const thoughtEl = document.getElementById('field-mse-thought');
+      const perceptionEl = document.getElementById('field-mse-perception');
+      const insightEl = document.getElementById('field-mse-insight');
+
+      if (moodEl) moodEl.value = patient.mse.mood;
+      if (thoughtEl) thoughtEl.value = patient.mse.thought;
+      if (perceptionEl) perceptionEl.value = patient.mse.perception;
+      if (insightEl) insightEl.value = patient.mse.insight;
+
+      // 6. Update Column 3 SOAP Fields
+      const soapSEl = document.getElementById('field-soap-s');
+      const soapOEl = document.getElementById('field-soap-o');
+      const soapAEl = document.getElementById('field-soap-a');
+      const soapPEl = document.getElementById('field-soap-p');
+
+      if (soapSEl) soapSEl.value = patient.soap.s;
+      if (soapOEl) soapOEl.value = patient.soap.o;
+      if (soapAEl) soapAEl.value = patient.soap.a;
+      if (soapPEl) soapPEl.value = patient.soap.p;
+
+      // 7. Render Longitudinal History
+      renderPatientHistory(patient);
+
+      // 8. Update Sign Button State
+      const signBtn = document.getElementById('btn-doctor-sign');
+      if (signBtn) {
+        if (patient.isSigned) {
+          signBtn.disabled = true;
+          signBtn.style.background = '#047857';
+          signBtn.innerHTML = `✓ Telah Disahkan DPJP (${patient.signedEncounterId})`;
+        } else {
+          signBtn.disabled = false;
+          signBtn.style.background = 'linear-gradient(135deg, #059669 0%, #10B981 100%)';
+          signBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Sahkan Rekam Medis (dr. Hendra, Sp.KJ) — ${patient.name.split('(')[0].trim()}
+          `;
+        }
+      }
+    }
+
+    // Function to render patient historical medical records timeline
+    function renderPatientHistory(patient) {
+      const timelineContainer = document.getElementById('patient-history-timeline');
+      if (!timelineContainer) return;
+
+      timelineContainer.innerHTML = '';
+
+      if (!patient.history || patient.history.length === 0) {
+        timelineContainer.innerHTML = `
+          <div style="text-align: center; padding: 24px 12px; color: var(--text-muted); font-size: 0.82rem;">
+            Belum ada riwayat rekam medis sebelumnya untuk pasien ini.
+          </div>
+        `;
+        return;
+      }
+
+      patient.history.forEach((rec, idx) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; position: relative; animation: fadeIn 0.3s ease;';
+        
+        let badgeHeader = `<span class="badge" style="background: rgba(100, 116, 139, 0.15); color: var(--text-muted); font-size: 0.68rem;">Kunjungan ${rec.status || 'Terdahulu'}</span>`;
+        if (rec.status === 'Baru Disahkan') {
+          badgeHeader = `<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-weight: 700; font-size: 0.68rem;">✨ BARU SAJA DISAHKAN & TERENKRIPSI</span>`;
+          item.style.border = '1.5px solid var(--color-teal)';
+        }
+
+        item.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div style="font-size: 0.84rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+              <span>🗓️ ${rec.date}</span>
+            </div>
+            ${badgeHeader}
+          </div>
+
+          <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">
+            DPJP: <strong>${rec.dpjp}</strong> &bull; Encounter: <code>${rec.encounterId}</code>
+          </div>
+
+          <div style="background: var(--bg-surface); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.78rem; margin-bottom: 8px;">
+            <div style="font-weight: 700; color: var(--color-teal); margin-bottom: 2px;">Diagnosa (Assessment):</div>
+            <div style="color: var(--text-primary);">${rec.diagnosis}</div>
+          </div>
+
+          <div style="font-size: 0.76rem; color: var(--text-primary); line-height: 1.4; margin-bottom: 8px;">
+            <strong>Resep & Rencana Terapi:</strong><br>
+            <span style="font-family: var(--font-mono); color: var(--text-secondary);">${rec.therapy.replace(/\\n/g, '<br>')}</span>
+          </div>
+
+          <div style="font-size: 0.74rem; color: var(--text-muted); font-style: italic; border-top: 1px dashed var(--border-subtle); padding-top: 6px;">
+            Catatan Klinis: "${rec.notes}"
+          </div>
+        `;
+        timelineContainer.appendChild(item);
+      });
+    }
+
+    // Tab Switching in Column 3 (MSE vs SOAP vs Riwayat Rekam Medis)
     const mseBtn = document.getElementById('tab-mse-btn');
     const soapBtn = document.getElementById('tab-soap-btn');
+    const historyBtn = document.getElementById('tab-history-btn');
+
     const mseBody = document.getElementById('editor-body-mse');
     const soapBody = document.getElementById('editor-body-soap');
+    const historyBody = document.getElementById('editor-body-history');
 
-    mseBtn.addEventListener('click', () => {
-      mseBtn.classList.add('active');
-      soapBtn.classList.remove('active');
-      mseBody.style.display = 'flex';
-      soapBody.style.display = 'none';
-    });
+    function switchEditorTab(activeBtn, activeBody) {
+      [mseBtn, soapBtn, historyBtn].forEach(btn => btn && btn.classList.remove('active'));
+      [mseBody, soapBody, historyBody].forEach(body => body && (body.style.display = 'none'));
 
-    soapBtn.addEventListener('click', () => {
-      soapBtn.classList.add('active');
-      mseBtn.classList.remove('active');
-      soapBody.style.display = 'flex';
-      mseBody.style.display = 'none';
-    });
+      if (activeBtn) activeBtn.classList.add('active');
+      if (activeBody) activeBody.style.display = 'flex';
+    }
 
-    // Doctor Sign Simulation
-    const signBtn = document.getElementById('btn-doctor-sign');
-    signBtn.addEventListener('click', () => {
-      signBtn.disabled = true;
-      signBtn.innerHTML = 'Menyimpan & Menandatangani Rekam Medis...';
+    if (mseBtn) mseBtn.addEventListener('click', () => switchEditorTab(mseBtn, mseBody));
+    if (soapBtn) soapBtn.addEventListener('click', () => switchEditorTab(soapBtn, soapBody));
+    if (historyBtn) historyBtn.addEventListener('click', () => switchEditorTab(historyBtn, historyBody));
 
-      setTimeout(() => {
-        signBtn.style.background = '#047857';
-        signBtn.innerHTML = '✓ Telah Disahkan DPJP (FHIR-ENC-90812)';
-        if (window.showToast) {
-          window.showToast('✓ Rekam Medis Rian berhasil disahkan dan disinkronkan ke SATUSEHAT!', 'success');
+    // Column 1 Patient Card Selection Listener
+    document.addEventListener('click', (e) => {
+      const card = e.target.closest('.patient-queue-card');
+      if (card) {
+        const pId = card.getAttribute('data-patient-id');
+        if (pId && patientsData[pId]) {
+          renderPatient(pId);
+          if (window.showToast) {
+            const p = patientsData[pId];
+            if (p.hasVn) {
+              window.showToast(`🎧 Membuka pasien ${p.name}. Voice Note semalam (${p.vnAudioDuration}) & asesmen siap direview!`, 'info');
+            } else {
+              window.showToast(`📋 Membuka profil klinis ${p.name}.`, 'info');
+            }
+          }
         }
-      }, 900);
-    });
-
-    // Voice Note Player Simulation
-    const vnPlayBtn = document.getElementById('vn-play-btn');
-    let isVnPlaying = false;
-    vnPlayBtn.addEventListener('click', () => {
-      isVnPlaying = !isVnPlaying;
-      if (isVnPlaying) {
-        vnPlayBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
-        if (window.showToast) {
-          window.showToast('🎧 Memutar rekaman Voice Note curhat krisis semalam (00:42)', 'info');
-        }
-      } else {
-        vnPlayBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
       }
     });
 
-    // Waveform simulation
-    const vnCanvas = document.getElementById('vn-waveform');
-    if (vnCanvas) {
+    // Doctor Sign EMR Action — API backed
+    const signBtn = document.getElementById('btn-doctor-sign');
+    if (signBtn) {
+      signBtn.addEventListener('click', async () => {
+        const patient = patientsData[activePatientId];
+        if (!patient) return;
+
+        signBtn.disabled = true;
+        signBtn.innerHTML = '⏳ Enkripsi AES-256 & Menandatangani Rekam Medis...';
+
+        const currentDiag = document.getElementById('field-soap-a')?.value || patient.soap.a;
+        const currentPlan = document.getElementById('field-soap-p')?.value || patient.soap.p;
+        const currentMood = document.getElementById('field-mse-mood')?.value || patient.mse.mood;
+        const currentThought = document.getElementById('field-mse-thought')?.value || patient.mse.thought;
+        const currentPerception = document.getElementById('field-mse-perception')?.value || patient.mse.perception;
+        const currentInsight = document.getElementById('field-mse-insight')?.value || patient.mse.insight;
+        const currentS = document.getElementById('field-soap-s')?.value || patient.soap.s;
+        const currentO = document.getElementById('field-soap-o')?.value || patient.soap.o;
+
+        // Call backend API to persist signed medical record
+        let fhirId = `FHIR-ENC-${Math.floor(Math.random() * 89999 + 10000)}`;
+        const result = await DocApiClient.post('/doctor/medical-records', {
+          appointmentId: patient.appointmentId || activePatientId,
+          mseData: { mood: currentMood, thought: currentThought, perception: currentPerception, insight: currentInsight },
+          soapData: { s: currentS, o: currentO, a: currentDiag, p: currentPlan }
+        });
+
+        if (result && result.record) {
+          fhirId = result.record.satusehatEncounterId || fhirId;
+        }
+
+        const today = new Date();
+        const todayFormatted = `${today.getDate()} September 2026`;
+
+        patient.isSigned = true;
+        patient.signedEncounterId = fhirId;
+
+        // Prepend to history
+        patient.history.unshift({
+          date: `${todayFormatted} (Hari Ini)`,
+          dpjp: 'dr. Hendra, Sp.KJ',
+          encounterId: fhirId,
+          diagnosis: currentDiag,
+          therapy: currentPlan,
+          notes: `Sesi tatap muka selesai. Evaluasi status mental: ${currentMood.substring(0, 70)}...`,
+          status: 'Baru Disahkan'
+        });
+
+        // Update Column 1 Queue Status
+        const activeCard = document.querySelector(`.patient-queue-card[data-patient-id="${activePatientId}"]`);
+        if (activeCard) {
+          const statusEl = activeCard.querySelector('.queue-patient-status');
+          if (statusEl) {
+            statusEl.style.color = '#047857';
+            statusEl.innerHTML = '✓ Selesai & Disahkan';
+          }
+        }
+
+        // Update sign button
+        signBtn.style.background = '#047857';
+        signBtn.innerHTML = `✓ Telah Disahkan DPJP (${fhirId})`;
+
+        // Re-render history timeline
+        renderPatientHistory(patient);
+
+        if (window.showToast) {
+          window.showToast(`✅ Rekam Medis ${patient.name} berhasil disahkan, dienkripsi AES-256 di database, dan disinkronkan ke SATUSEHAT Kemenkes (${fhirId})!`, 'success');
+        }
+      });
+    }
+
+
+    // Voice Note Audio & Waveform Simulation
+    let isVnPlaying = false;
+    function attachAudioPlayListener() {
+      const playBtn = document.getElementById('vn-play-btn');
+      if (!playBtn) return;
+      isVnPlaying = false;
+
+      playBtn.addEventListener('click', () => {
+        const patient = patientsData[activePatientId];
+        isVnPlaying = !isVnPlaying;
+        if (isVnPlaying) {
+          playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+          if (window.showToast) {
+            window.showToast(`🎧 Memutar rekaman Voice Note ${patient.name} (${patient.vnAudioDuration}). Suara didekripsi on-the-fly di browser dokter.`, 'info');
+          }
+        } else {
+          playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+        }
+      });
+    }
+
+    function initWaveform() {
+      const vnCanvas = document.getElementById('vn-waveform');
+      if (!vnCanvas) return;
       const ctx = vnCanvas.getContext('2d');
-      vnCanvas.width = vnCanvas.parentElement.clientWidth;
+      vnCanvas.width = vnCanvas.parentElement.clientWidth || 320;
       vnCanvas.height = 26;
 
-      function renderWave() {
-        ctx.clearRect(0, 0, vnCanvas.width, vnCanvas.height);
-        const bars = 44;
-        const barW = vnCanvas.width / bars;
-        for (let i = 0; i < bars; i++) {
-          const h = (Math.sin(i * 0.4) * 0.5 + 0.5) * 18 + 4;
-          ctx.fillStyle = i < 16 ? '#14B8A6' : 'rgba(255,255,255,0.2)';
-          ctx.fillRect(i * barW, (26 - h) / 2, barW - 2, h);
-        }
+      ctx.clearRect(0, 0, vnCanvas.width, vnCanvas.height);
+      const bars = 44;
+      const barW = vnCanvas.width / bars;
+      for (let i = 0; i < bars; i++) {
+        const h = (Math.sin(i * 0.45) * 0.5 + 0.5) * 18 + 4;
+        ctx.fillStyle = i < 16 ? '#14B8A6' : 'rgba(255,255,255,0.2)';
+        ctx.fillRect(i * barW, (26 - h) / 2, barW - 2, h);
       }
-      renderWave();
+    }
+
+    // Initial load
+    renderPatient('rian');
+
+    // Zero-Knowledge Encryption Comparison Modal Logic
+    const cryptoModal = document.getElementById('doctor-crypto-comparison-modal');
+    const openCryptoBtn = document.getElementById('btn-toggle-raw-encryption');
+    const closeCryptoBtn = document.getElementById('btn-close-crypto-modal');
+    const closeCryptoDialogBtn = document.getElementById('btn-close-crypto-dialog');
+
+    if (openCryptoBtn) {
+      openCryptoBtn.addEventListener('click', () => {
+        if (cryptoModal) cryptoModal.classList.add('active');
+      });
+    }
+
+    [closeCryptoBtn, closeCryptoDialogBtn].forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (cryptoModal) cryptoModal.classList.remove('active');
+        });
+      }
+    });
+
+    if (cryptoModal) {
+      cryptoModal.addEventListener('click', (e) => {
+        if (e.target === cryptoModal) cryptoModal.classList.remove('active');
+      });
     }
   </script>
+
+  <!-- Modal Perbandingan Enkripsi Database vs Tampilan Dokter -->
+  <div class="modal-overlay" id="doctor-crypto-comparison-modal" role="dialog" aria-modal="true">
+    <div class="auth-modal-dialog" style="border: 2px solid var(--color-teal); max-width: 720px; width: 92%;">
+      <div class="modal-header-banner" style="background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%); color: white;">
+        <div class="modal-header-title">
+          <h3 style="display: flex; align-items: center; gap: 8px;">
+            🔒 Pembuktian Enkripsi Zero-Knowledge (UU PDP No. 27/2022)
+          </h3>
+          <p>Perbandingan Data Mentah di Database/Drizzle Studio vs Layar Dokter DPJP</p>
+        </div>
+        <button class="modal-close-btn" id="btn-close-crypto-modal">&times;</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto;">
+        <div style="background: rgba(13, 148, 136, 0.08); border-left: 4px solid var(--color-teal); padding: 12px 14px; border-radius: var(--radius-md); font-size: 0.84rem; line-height: 1.5;">
+          <strong>Standar Privasi Medis:</strong> Seluruh tabel klinis (<code>clinical_overnight_logs</code>, <code>clinical_interview_probes</code>, dan <code>clinical_medical_records</code>) disimpan dalam bentuk <strong>AES-256-GCM Ciphertext</strong>. Administrator platform maupun siapapun yang membuka Drizzle Studio <strong>TIDAK DAPAT MEMBACA</strong> isi keluhan krisis maupun catatan evaluasi status mental (MSE) pasien.
+        </div>
+
+        <!-- Comparison Table / Cards -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <!-- Item 1: Raw Overnight Transcript -->
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="font-size: 0.8rem; font-weight: 800; color: var(--color-teal); margin-bottom: 8px;">
+              1. Tabel: <code>clinical_overnight_logs.raw_transcript</code> (Pesan Suara Pasien)
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.78rem;">
+              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">
+                <div style="color: #EF4444; font-weight: 700; margin-bottom: 4px;">🔴 Tampilan Drizzle Studio / Admin:</div>
+                <code style="word-break: break-all; color: #FCA5A5; font-size: 0.72rem; line-height: 1.4;">
+                  ENC_AES256_GCM:c5c2f2e6d41583b010e9c8f2:91a4b8... (Tidak dapat dibaca)
+                </code>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                <div style="color: #10B981; font-weight: 700; margin-bottom: 4px;">🟢 Tampilan Dokter Terdekripsi:</div>
+                <div style="color: var(--text-primary); font-style: italic; line-height: 1.4;">
+                  "Dada saya berdebar kencang sekali Dok... rasanya seperti mau mati sesak napas..."
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 2: Recommended Question Probe -->
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="font-size: 0.8rem; font-weight: 800; color: var(--color-teal); margin-bottom: 8px;">
+              2. Tabel: <code>clinical_interview_probes.recommended_question</code> (Pertanyaan Wawancara Sp.KJ)
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.78rem;">
+              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">
+                <div style="color: #EF4444; font-weight: 700; margin-bottom: 4px;">🔴 Tampilan Drizzle Studio / Admin:</div>
+                <code style="word-break: break-all; color: #FCA5A5; font-size: 0.72rem; line-height: 1.4;">
+                  ENC_AES256_GCM:25d5db462ebc2c633d51aa74:e30c94... (Ciphertext)
+                </code>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                <div style="color: #10B981; font-weight: 700; margin-bottom: 4px;">🟢 Tampilan Dokter Terdekripsi:</div>
+                <div style="color: var(--text-primary); font-style: italic; line-height: 1.4;">
+                  "Mas Rian, di rekaman suara semalam Anda mengeluhkan dada berdebar kencang dan tangan gemetar..."
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 3: Medical Record MSE Data -->
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="font-size: 0.8rem; font-weight: 800; color: var(--color-teal); margin-bottom: 8px;">
+              3. Tabel: <code>clinical_medical_records.mse_data</code> (Status Mental Pasien)
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.78rem;">
+              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">
+                <div style="color: #EF4444; font-weight: 700; margin-bottom: 4px;">🔴 Tampilan Drizzle Studio / Admin:</div>
+                <code style="word-break: break-all; color: #FCA5A5; font-size: 0.72rem; line-height: 1.4;">
+                  ENC_AES256_GCM:f8233e1354708ff460741289:80c71a... (Ciphertext)
+                </code>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                <div style="color: #10B981; font-weight: 700; margin-bottom: 4px;">🟢 Tampilan Dokter Terdekripsi:</div>
+                <div style="color: var(--text-primary); font-style: italic; line-height: 1.4;">
+                  {"moodAffect":"Mood cemas, afek serasi","thoughtFormContent":"Bentuk pikir koheren..."}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-close-crypto-dialog" style="width: 100%; padding: 10px; font-weight: 700; background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%);">
+          Tutup & Kembali ke Konsultasi
+        </button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

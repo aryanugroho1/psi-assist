@@ -1,3 +1,12 @@
+# Dependencies
+node_modules/
+
+# Local databases & SQLite locks
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
 # OS generated files
 Thumbs.db
 ehthumbs.db
@@ -10,6 +19,7 @@ $RECYCLE.BIN/
 .env.local
 *.log
 
-# Editor directories
+# Scratch & IDE
+scratch/
 .vscode/
 .idea/

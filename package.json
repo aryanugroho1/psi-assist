@@ -1,0 +1,27 @@
+{
+  "name": "psi-assist-backend",
+  "version": "1.1.0",
+  "description": "MindScribe & Triage AI Backend Gateway (SATUSEHAT & UU PDP No. 27/2022 Compliant)",
+  "main": "backend/src/server.js",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "test": "node backend/tests/test-api-suite.js",
+    "studio": "drizzle-kit studio --port 4983",
+    "db:seed": "node drizzle/seed.js"
+  },
+  "keywords": [
+    "psychiatry",
+    "triage",
+    "whatsapp",
+    "satusehat",
+    "pgcrypto",
+    "rbac"
+  ],
+  "author": "MindScribe AI Engineering",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "better-sqlite3": "^13.0.3",
+    "drizzle-kit": "^0.31.11",
+    "drizzle-orm": "^0.45.3"
+  }
+}
