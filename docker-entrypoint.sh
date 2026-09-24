@@ -11,7 +11,7 @@ if [ ! -f "${DATABASE_PATH:-/app/data/mindscribe.db}" ]; then
     cp /app/mindscribe.db "${DATABASE_PATH:-/app/data/mindscribe.db}"
   else
     echo "[Docker Entrypoint] Initializing fresh database with seed data..."
-    npm run db:seed
+    npm run db:seed || true
   fi
 fi
 

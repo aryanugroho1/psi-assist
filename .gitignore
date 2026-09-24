@@ -3,6 +3,7 @@ node_modules/
 
 # Local databases & SQLite locks
 *.db
+!mindscribe.db
 *.db-shm
 *.db-wal
 *.sqlite

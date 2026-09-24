@@ -3,7 +3,7 @@
 # Native SQLite (better-sqlite3) + REST API + Static Frontend + Drizzle Studio
 # ==============================================================================
 
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 # Install build tools for native SQLite addons and system health tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
