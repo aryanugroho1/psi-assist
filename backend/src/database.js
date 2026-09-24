@@ -20,7 +20,68 @@ class DatabaseStore {
     this.sqlite = new Database(dbPath);
     this.sqlite.pragma('journal_mode = WAL');
     this.sqlite.pragma('foreign_keys = ON');
+    this._initFacilityTables();
     console.log(`[DatabaseStore] Connected to SQLite database: ${dbPath}`);
+  }
+
+  _initFacilityTables() {
+    try {
+      this.sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS ops_facilities (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          facility_code TEXT NOT NULL UNIQUE,
+          enrollment_code TEXT NOT NULL UNIQUE,
+          enrollment_active INTEGER DEFAULT 1,
+          max_staff_quota INTEGER DEFAULT 15,
+          lead_admin_name TEXT,
+          lead_admin_email TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS ops_facility_staff (
+          id TEXT PRIMARY KEY,
+          facility_id TEXT NOT NULL REFERENCES ops_facilities(id) ON DELETE CASCADE,
+          staff_id_code TEXT NOT NULL UNIQUE,
+          full_name TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          role TEXT NOT NULL DEFAULT 'ROLE_ADMIN',
+          job_title TEXT DEFAULT 'Staf Pendaftaran & Kasir',
+          is_active INTEGER DEFAULT 1,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // Seed default facility if not exists
+      const facExists = this.sqlite.prepare('SELECT id FROM ops_facilities WHERE id = ?').get('fac-sejahtera');
+      if (!facExists) {
+        this.sqlite.prepare(`
+          INSERT INTO ops_facilities (id, name, facility_code, enrollment_code, enrollment_active, max_staff_quota, lead_admin_name, lead_admin_email)
+          VALUES ('fac-sejahtera', 'Klinik Jiwa Sejahtera Pratama', 'KJS-01', 'KLINIK-JIWA-2026', 1, 15, 'Dr. Budi Santoso, MARS', 'lead.admin@klinikjiwa.id')
+        `).run();
+      }
+
+      // Seed lead admin if not exists
+      const leadExists = this.sqlite.prepare('SELECT id FROM ops_facility_staff WHERE id = ?').get('staff-lead-01');
+      if (!leadExists) {
+        this.sqlite.prepare(`
+          INSERT INTO ops_facility_staff (id, facility_id, staff_id_code, full_name, email, password, role, job_title, is_active)
+          VALUES ('staff-lead-01', 'fac-sejahtera', 'ADM-LEAD-001', 'Dr. Budi Santoso, MARS', 'lead.admin@klinikjiwa.id', 'password123', 'ROLE_ADMIN_LEAD', 'Kepala Operasional & IT Faskes', 1)
+        `).run();
+      }
+
+      // Seed default admin (Siti) if not exists
+      const sitiExists = this.sqlite.prepare('SELECT id FROM ops_facility_staff WHERE id = ?').get('staff-siti-01');
+      if (!sitiExists) {
+        this.sqlite.prepare(`
+          INSERT INTO ops_facility_staff (id, facility_id, staff_id_code, full_name, email, password, role, job_title, is_active)
+          VALUES ('staff-siti-01', 'fac-sejahtera', 'ADM-KASIR-009', 'Siti Rahma', 'admin@klinikjiwa.id', 'password123', 'ROLE_ADMIN', 'Staf Pendaftaran & Kasir', 1)
+        `).run();
+      }
+    } catch (e) {
+      console.warn('[DatabaseStore] _initFacilityTables notice:', e.message);
+    }
   }
 
   // =========================================================================
@@ -1284,6 +1345,195 @@ class DatabaseStore {
     } catch (err) {
       console.error('[DatabaseStore] ingestWhatsAppCrisisVN error:', err.message);
       return { success: false, error: err.message };
+    }
+  }
+
+  // =========================================================================
+  // FACILITY & DELEGATED STAFF MANAGEMENT (ops_schema)
+  // =========================================================================
+  getFacilityInfo(facilityId = 'fac-sejahtera') {
+    try {
+      const facility = this.sqlite.prepare(`
+        SELECT id, name, facility_code as facilityCode, enrollment_code as enrollmentCode,
+               enrollment_active as enrollmentActive, max_staff_quota as maxStaffQuota,
+               lead_admin_name as leadAdminName, lead_admin_email as leadAdminEmail, created_at as createdAt
+        FROM ops_facilities WHERE id = ?
+      `).get(facilityId);
+      if (!facility) return null;
+
+      const staffCount = this.sqlite.prepare(`
+        SELECT COUNT(*) as count FROM ops_facility_staff WHERE facility_id = ? AND is_active = 1
+      `).get(facilityId).count;
+
+      return {
+        ...facility,
+        enrollmentActive: Boolean(facility.enrollmentActive),
+        activeStaffCount: staffCount,
+        availableSlotsLeft: Math.max(0, facility.maxStaffQuota - staffCount)
+      };
+    } catch (err) {
+      console.error('[DatabaseStore] getFacilityInfo error:', err.message);
+      return null;
+    }
+  }
+
+  getFacilityStaffList(facilityId = 'fac-sejahtera') {
+    try {
+      const rows = this.sqlite.prepare(`
+        SELECT id, facility_id as facilityId, staff_id_code as staffIdCode, full_name as fullName,
+               email, role, job_title as jobTitle, is_active as isActive, created_at as createdAt
+        FROM ops_facility_staff WHERE facility_id = ?
+        ORDER BY role DESC, created_at ASC
+      `).all(facilityId);
+      return rows.map(r => ({ ...r, isActive: Boolean(r.isActive) }));
+    } catch (err) {
+      console.error('[DatabaseStore] getFacilityStaffList error:', err.message);
+      return [];
+    }
+  }
+
+  registerStaffViaEnrollmentCode({ enrollmentCode, fullName, staffIdCode, email, password, jobTitle = 'Staf Pendaftaran & Kasir' }) {
+    try {
+      const cleanCode = (enrollmentCode || '').trim();
+      const facility = this.sqlite.prepare(`
+        SELECT * FROM ops_facilities WHERE enrollment_code = ?
+      `).get(cleanCode);
+
+      if (!facility) {
+        return { success: false, code: 'INVALID_ENROLLMENT_CODE', message: 'Kode khusus faskes tidak ditemukan. Pastikan Anda memasukkan kode yang benar dari pimpinan faskes.' };
+      }
+
+      if (!facility.enrollment_active) {
+        return { success: false, code: 'ENROLLMENT_DISABLED', message: 'Pendaftaran mandiri untuk faskes ini sedang ditutup/dinonaktifkan oleh Admin Utama.' };
+      }
+
+      const currentCount = this.sqlite.prepare(`
+        SELECT COUNT(*) as count FROM ops_facility_staff WHERE facility_id = ? AND is_active = 1
+      `).get(facility.id).count;
+
+      if (currentCount >= facility.max_staff_quota) {
+        return { success: false, code: 'QUOTA_EXCEEDED', message: `Kuota staf untuk faskes ${facility.name} telah mencapai batas maksimal (${facility.max_staff_quota} staf).` };
+      }
+
+      // Check duplicates
+      const dup = this.sqlite.prepare(`
+        SELECT id FROM ops_facility_staff WHERE email = ? OR staff_id_code = ?
+      `).get(email.trim().toLowerCase(), staffIdCode.trim());
+
+      if (dup) {
+        return { success: false, code: 'DUPLICATE_STAFF', message: 'Email atau ID Karyawan tersebut sudah terdaftar di sistem.' };
+      }
+
+      const id = `staff-${crypto.randomBytes(4).toString('hex')}`;
+      this.sqlite.prepare(`
+        INSERT INTO ops_facility_staff (id, facility_id, staff_id_code, full_name, email, password, role, job_title, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, 'ROLE_ADMIN', ?, 1)
+      `).run(id, facility.id, staffIdCode.trim(), fullName.trim(), email.trim().toLowerCase(), password, jobTitle.trim());
+
+      this.recordAudit(staffIdCode.trim(), 'ROLE_ADMIN', 'STAFF_ENROLLED_VIA_CODE', `ops_schema.ops_facility_staff:${id}`, `Staf ${fullName} terdaftar mandiri pada faskes ${facility.name} via kode ${cleanCode}`);
+
+      return {
+        success: true,
+        staff: {
+          id,
+          facilityId: facility.id,
+          facilityName: facility.name,
+          staffIdCode: staffIdCode.trim(),
+          fullName: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          role: 'ROLE_ADMIN',
+          jobTitle: jobTitle.trim()
+        }
+      };
+    } catch (err) {
+      console.error('[DatabaseStore] registerStaffViaEnrollmentCode error:', err.message);
+      return { success: false, code: 'SERVER_ERROR', message: err.message };
+    }
+  }
+
+  createStaffDirectly({ facilityId = 'fac-sejahtera', fullName, staffIdCode, email, password, role = 'ROLE_ADMIN', jobTitle = 'Staf Operasional', requester = 'ADMIN_LEAD' }) {
+    try {
+      const facility = this.sqlite.prepare(`SELECT * FROM ops_facilities WHERE id = ?`).get(facilityId);
+      if (!facility) return { success: false, code: 'FACILITY_NOT_FOUND', message: 'Faskes tidak ditemukan.' };
+
+      const dup = this.sqlite.prepare(`
+        SELECT id FROM ops_facility_staff WHERE email = ? OR staff_id_code = ?
+      `).get(email.trim().toLowerCase(), staffIdCode.trim());
+
+      if (dup) {
+        return { success: false, code: 'DUPLICATE_STAFF', message: 'Email atau ID Karyawan sudah terdaftar.' };
+      }
+
+      const id = `staff-${crypto.randomBytes(4).toString('hex')}`;
+      this.sqlite.prepare(`
+        INSERT INTO ops_facility_staff (id, facility_id, staff_id_code, full_name, email, password, role, job_title, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+      `).run(id, facilityId, staffIdCode.trim(), fullName.trim(), email.trim().toLowerCase(), password, role, jobTitle.trim());
+
+      this.recordAudit(requester, 'ROLE_ADMIN_LEAD', 'STAFF_PROVISIONED', `ops_schema.ops_facility_staff:${id}`, `Admin utama faskes menambahkan ${fullName} (${role})`);
+
+      return {
+        success: true,
+        staff: {
+          id,
+          facilityId,
+          staffIdCode: staffIdCode.trim(),
+          fullName: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          role,
+          jobTitle: jobTitle.trim()
+        }
+      };
+    } catch (err) {
+      console.error('[DatabaseStore] createStaffDirectly error:', err.message);
+      return { success: false, code: 'SERVER_ERROR', message: err.message };
+    }
+  }
+
+  updateFacilityEnrollmentCode(facilityId = 'fac-sejahtera', newCode, isActive = true, requester = 'ADMIN_LEAD') {
+    try {
+      const code = (newCode || `KLINIK-${crypto.randomBytes(3).toString('hex').toUpperCase()}`).trim();
+      this.sqlite.prepare(`
+        UPDATE ops_facilities SET enrollment_code = ?, enrollment_active = ? WHERE id = ?
+      `).run(code, isActive ? 1 : 0, facilityId);
+
+      this.recordAudit(requester, 'ROLE_ADMIN_LEAD', 'FACILITY_CODE_UPDATED', `ops_schema.ops_facilities:${facilityId}`, `Updated enrollment code to ${code} (active: ${isActive})`);
+
+      return { success: true, enrollmentCode: code, enrollmentActive: Boolean(isActive) };
+    } catch (err) {
+      console.error('[DatabaseStore] updateFacilityEnrollmentCode error:', err.message);
+      return { success: false, message: err.message };
+    }
+  }
+
+  toggleStaffActiveStatus(staffId, shouldActive, requester = 'ADMIN_LEAD') {
+    try {
+      this.sqlite.prepare(`
+        UPDATE ops_facility_staff SET is_active = ? WHERE id = ?
+      `).run(shouldActive ? 1 : 0, staffId);
+
+      this.recordAudit(requester, 'ROLE_ADMIN_LEAD', shouldActive ? 'STAFF_ACTIVATED' : 'STAFF_DEACTIVATED', `ops_schema.ops_facility_staff:${staffId}`, `Status changed to active=${shouldActive}`);
+
+      return { success: true, staffId, isActive: Boolean(shouldActive) };
+    } catch (err) {
+      console.error('[DatabaseStore] toggleStaffActiveStatus error:', err.message);
+      return { success: false, message: err.message };
+    }
+  }
+
+  findStaffByCredentials(identifier, password) {
+    try {
+      const clean = (identifier || '').trim().toLowerCase();
+      const staff = this.sqlite.prepare(`
+        SELECT s.*, f.name as facility_name
+        FROM ops_facility_staff s
+        JOIN ops_facilities f ON s.facility_id = f.id
+        WHERE (LOWER(s.email) = ? OR LOWER(s.staff_id_code) = ?) AND s.password = ? AND s.is_active = 1
+      `).get(clean, clean, password);
+      return staff || null;
+    } catch (err) {
+      console.error('[DatabaseStore] findStaffByCredentials error:', err.message);
+      return null;
     }
   }
 }

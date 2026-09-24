@@ -947,23 +947,34 @@
           <div><strong>Pembatasan RBAC Ketat:</strong> Akun staf administrasi hanya berwenang mengelola data antrean dan pembayaran. Seluruh akses ke rekam medis diblokir.</div>
         </div>
 
+        <!-- Mode Tabs: Login vs Register with Hospital Code -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+          <button type="button" id="tab-admin-login" style="flex: 1; padding: 8px 12px; font-size: 0.82rem; font-weight: 600; background: var(--color-teal); color: #0f172a; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+            🔑 Masuk Portal Staf
+          </button>
+          <button type="button" id="tab-admin-register" style="flex: 1; padding: 8px 12px; font-size: 0.82rem; font-weight: 600; background: rgba(255,255,255,0.06); color: var(--color-text-secondary); border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+            📝 Daftar dengan Kode Faskes
+          </button>
+        </div>
+
         <div class="rbac-forbidden-alert" id="admin-rbac-forbidden-alert">
           ⛔ <strong>HTTP 403 FORBIDDEN:</strong> Akses ditolak! Akun Anda berstatus <code>ROLE_ADMIN</code>. Berdasarkan UU PDP No. 27/2022, staf non-medis dilarang keras membaca catatan psikologis pasien.
         </div>
 
+        <!-- 1. Form Login Staf -->
         <form id="admin-login-form">
           <div class="form-group">
-            <label for="admin-staff-id">ID Karyawan / Staf Kasir:</label>
-            <input type="text" id="admin-staff-id" class="form-control" value="ADM-KASIR-009" required>
+            <label for="admin-staff-id">ID Karyawan / Email Dinas:</label>
+            <input type="text" id="admin-staff-id" class="form-control" value="ADM-KASIR-009" placeholder="Contoh: ADM-KASIR-009 atau admin@klinikjiwa.id" required>
           </div>
 
           <div class="form-group">
-            <label for="admin-pin">PIN Shift Kasir / Password:</label>
+            <label for="admin-pin">Password / PIN Shift:</label>
             <input type="password" id="admin-pin" class="form-control" value="password123" required>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-            <button type="submit" class="btn btn-secondary" style="width: 100%;">
+            <button type="submit" id="btn-admin-submit" class="btn btn-secondary" style="width: 100%;">
               Masuk ke Portal Operasional
             </button>
             <a href="admin-dashboard.html" class="btn btn-secondary" style="width: 100%; font-size: 0.82rem; text-align: center; border-color: var(--border-subtle);">
@@ -973,6 +984,52 @@
               ⚠️ Uji Coba Percobaan Akses Rekam Medis oleh Admin (Simulasi HTTP 403)
             </button>
           </div>
+        </form>
+
+        <!-- 2. Form Registrasi Staf dengan Kode Khusus Faskes -->
+        <form id="admin-register-form" style="display: none;">
+          <div id="admin-register-alert" style="display: none; padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 12px; line-height: 1.4;"></div>
+
+          <div class="form-group" style="background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
+            <label for="reg-enrollment-code" style="color: #38bdf8; font-weight: 700; margin-bottom: 4px;">Kode Khusus Rumah Sakit / Faskes:</label>
+            <input type="text" id="reg-enrollment-code" class="form-control" value="KLINIK-JIWA-2026" placeholder="Masukkan Kode dari Pimpinan Faskes" required style="letter-spacing: 1px; font-family: monospace; font-weight: 700; color: #38bdf8; background: rgba(0,0,0,0.3);">
+            <small style="font-size: 0.72rem; color: var(--color-text-muted); display: block; margin-top: 4px;">Dapatkan kode ini dari Kepala Operasional / IT Faskes Anda.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-staff-name">Nama Lengkap Staf:</label>
+            <input type="text" id="reg-staff-name" class="form-control" placeholder="Contoh: Rahmat Hidayat, A.Md.Kes" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label for="reg-staff-id">ID Karyawan / NIP:</label>
+              <input type="text" id="reg-staff-id" class="form-control" placeholder="ADM-KASIR-015" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-job-title">Jabatan Operasional:</label>
+              <select id="reg-job-title" class="form-control" style="background: var(--color-surface); color: var(--color-text-primary);">
+                <option value="Staf Pendaftaran & Kasir">Staf Pendaftaran & Kasir</option>
+                <option value="Staf Kasir & Penagihan">Staf Kasir & Penagihan</option>
+                <option value="Staf Loket & Resepsionis">Staf Loket & Resepsionis</option>
+                <option value="Staf Operasional Rekam Medis">Staf Operasional Rekam Medis</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email">Email Dinas Staf:</label>
+            <input type="email" id="reg-email" class="form-control" placeholder="nama@klinikjiwa.id" required>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-password">Password Baru:</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="Minimal 6 karakter" required>
+          </div>
+
+          <button type="submit" id="btn-register-submit" class="btn btn-primary" style="width: 100%; margin-top: 6px;">
+            Daftarkan Akun Staf ke Faskes
+          </button>
         </form>
       </div>
     </div>

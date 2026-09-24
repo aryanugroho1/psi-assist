@@ -68,6 +68,31 @@ const opsAuditLogs = sqliteTable('ops_audit_logs', {
   timestamp: text('timestamp').default('CURRENT_TIMESTAMP')
 });
 
+const opsFacilities = sqliteTable('ops_facilities', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  facilityCode: text('facility_code').notNull().unique(),
+  enrollmentCode: text('enrollment_code').notNull().unique(),
+  enrollmentActive: integer('enrollment_active', { mode: 'boolean' }).default(true),
+  maxStaffQuota: integer('max_staff_quota').default(15),
+  leadAdminName: text('lead_admin_name'),
+  leadAdminEmail: text('lead_admin_email'),
+  createdAt: text('created_at').default('CURRENT_TIMESTAMP')
+});
+
+const opsFacilityStaff = sqliteTable('ops_facility_staff', {
+  id: text('id').primaryKey(),
+  facilityId: text('facility_id').notNull().references(() => opsFacilities.id),
+  staffIdCode: text('staff_id_code').notNull().unique(),
+  fullName: text('full_name').notNull(),
+  email: text('email').notNull().unique(),
+  password: text('password').notNull(),
+  role: text('role').notNull().default('ROLE_ADMIN'), // ROLE_ADMIN, ROLE_ADMIN_LEAD
+  jobTitle: text('job_title').default('Staf Pendaftaran & Kasir'),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  createdAt: text('created_at').default('CURRENT_TIMESTAMP')
+});
+
 // =============================================================================
 // CLINICAL_SCHEMA TABLES (Medical Records, Voice Notes & Evidence Grounding)
 // =============================================================================
@@ -132,6 +157,8 @@ module.exports = {
   opsAppointments,
   opsBillingTransactions,
   opsAuditLogs,
+  opsFacilities,
+  opsFacilityStaff,
   clinicalOvernightLogs,
   clinicalVoiceNotes,
   clinicalInterviewProbes,

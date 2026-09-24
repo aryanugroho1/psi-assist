@@ -178,26 +178,183 @@
       });
     }
 
-    // Handle Admin Login Simulation -> Redirects to admin-dashboard.html
-    const adminForm = document.getElementById('admin-login-form');
-    if (adminForm) {
-      adminForm.addEventListener('submit', (e) => {
+    // -------------------------------------------------------------------------
+    // Admin Faskes Tabs & Registration Handlers
+    // -------------------------------------------------------------------------
+    const tabAdminLogin = document.getElementById('tab-admin-login');
+    const tabAdminRegister = document.getElementById('tab-admin-register');
+    const adminLoginForm = document.getElementById('admin-login-form');
+    const adminRegisterForm = document.getElementById('admin-register-form');
+    const adminRegisterAlert = document.getElementById('admin-register-alert');
+
+    function switchAdminTab(isRegister) {
+      if (!tabAdminLogin || !tabAdminRegister || !adminLoginForm || !adminRegisterForm) return;
+      if (isRegister) {
+        tabAdminLogin.style.background = 'rgba(255,255,255,0.06)';
+        tabAdminLogin.style.color = 'var(--color-text-secondary)';
+        tabAdminRegister.style.background = 'var(--color-teal)';
+        tabAdminRegister.style.color = '#0f172a';
+        adminLoginForm.style.display = 'none';
+        adminRegisterForm.style.display = 'block';
+      } else {
+        tabAdminLogin.style.background = 'var(--color-teal)';
+        tabAdminLogin.style.color = '#0f172a';
+        tabAdminRegister.style.background = 'rgba(255,255,255,0.06)';
+        tabAdminRegister.style.color = 'var(--color-text-secondary)';
+        adminLoginForm.style.display = 'block';
+        adminRegisterForm.style.display = 'none';
+      }
+    }
+
+    if (tabAdminLogin && tabAdminRegister) {
+      tabAdminLogin.addEventListener('click', (e) => { e.preventDefault(); switchAdminTab(false); });
+      tabAdminRegister.addEventListener('click', (e) => { e.preventDefault(); switchAdminTab(true); });
+    }
+
+    // Handle Admin Login with Real Backend Authentication
+    if (adminLoginForm) {
+      adminLoginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const submitBtn = adminForm.querySelector('button[type="submit"]');
+        const staffIdOrEmail = document.getElementById('admin-staff-id')?.value?.trim() || '';
+        const pinOrPassword = document.getElementById('admin-pin')?.value?.trim() || '';
+        const submitBtn = document.getElementById('btn-admin-submit');
+
         submitBtn.disabled = true;
         submitBtn.innerHTML = 'Memvalidasi Kredensial Staf...';
 
-        setTimeout(() => {
+        try {
+          const res = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: staffIdOrEmail,
+              password: pinOrPassword
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok || !data.success) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Masuk ke Portal Operasional';
+            const msg = data.message || 'ID Karyawan/Email atau PIN salah.';
+            if (window.showToast) {
+              window.showToast('⛔ Login Gagal: ' + msg, 'error');
+            } else {
+              alert('Login Gagal: ' + msg);
+            }
+            return;
+          }
+
+          // Successful Staff Login
+          submitBtn.innerHTML = '✓ Terverifikasi! Mengalihkan...';
+          sessionStorage.setItem('mindscribe_auth_token', data.token);
+          if (data.user) {
+            sessionStorage.setItem('mindscribe_user', JSON.stringify(data.user));
+          }
+
+          if (window.showToast) {
+            window.showToast(`✓ Berhasil Masuk: Membuka Portal Operasional (${data.user.name})...`, 'info');
+          }
+
+          setTimeout(() => {
+            closeModal();
+            window.location.href = 'admin-dashboard.html';
+          }, 500);
+
+        } catch (err) {
+          console.error('Admin login error:', err);
           submitBtn.disabled = false;
           submitBtn.innerHTML = 'Masuk ke Portal Operasional';
-          closeModal();
           if (window.showToast) {
-            window.showToast('✓ Berhasil Masuk: Membuka Portal Admin Operasional...', 'info');
+            window.showToast('⛔ Gagal menghubungi server otentikasi.', 'error');
           }
+        }
+      });
+    }
+
+    // Handle Staff Self-Registration via Hospital Code
+    if (adminRegisterForm) {
+      adminRegisterForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = document.getElementById('reg-enrollment-code')?.value?.trim() || '';
+        const fullName = document.getElementById('reg-staff-name')?.value?.trim() || '';
+        const staffId = document.getElementById('reg-staff-id')?.value?.trim() || '';
+        const jobTitle = document.getElementById('reg-job-title')?.value || 'Staf Pendaftaran & Kasir';
+        const email = document.getElementById('reg-email')?.value?.trim() || '';
+        const password = document.getElementById('reg-password')?.value || '';
+        const regSubmitBtn = document.getElementById('btn-register-submit');
+
+        if (adminRegisterAlert) adminRegisterAlert.style.display = 'none';
+        regSubmitBtn.disabled = true;
+        regSubmitBtn.innerHTML = 'Mendaftarkan Staf ke Faskes...';
+
+        try {
+          const res = await fetch('/api/v1/auth/register-staff', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              enrollmentCode: code,
+              fullName: fullName,
+              staffIdCode: staffId,
+              jobTitle: jobTitle,
+              email: email,
+              password: password
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok || !data.success) {
+            regSubmitBtn.disabled = false;
+            regSubmitBtn.innerHTML = 'Daftarkan Akun Staf ke Faskes';
+            if (adminRegisterAlert) {
+              adminRegisterAlert.style.display = 'block';
+              adminRegisterAlert.style.background = 'rgba(239, 68, 68, 0.15)';
+              adminRegisterAlert.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+              adminRegisterAlert.style.color = '#fca5a5';
+              adminRegisterAlert.innerHTML = '⛔ <strong>Pendaftaran Ditolak:</strong> ' + (data.message || 'Kode faskes tidak valid.');
+            }
+            return;
+          }
+
+          // Registration Successful
+          regSubmitBtn.disabled = false;
+          regSubmitBtn.innerHTML = 'Daftarkan Akun Staf ke Faskes';
+
+          if (adminRegisterAlert) {
+            adminRegisterAlert.style.display = 'block';
+            adminRegisterAlert.style.background = 'rgba(16, 185, 129, 0.15)';
+            adminRegisterAlert.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+            adminRegisterAlert.style.color = '#6ee7b7';
+            adminRegisterAlert.innerHTML = `✓ <strong>Pendaftaran Berhasil!</strong> Akun untuk <b>${data.staff.fullName}</b> telah terdaftar di faskes. Silakan login.`;
+          }
+
+          if (window.showToast) {
+            window.showToast(`✓ Akun Staf ${data.staff.fullName} Berhasil Didaftarkan!`, 'success');
+          }
+
+          // Pre-fill login form and switch to login tab after 1.5s
           setTimeout(() => {
-            window.location.href = 'admin-dashboard.html';
-          }, 400);
-        }, 800);
+            const adminStaffInput = document.getElementById('admin-staff-id');
+            const adminPinInput = document.getElementById('admin-pin');
+            if (adminStaffInput) adminStaffInput.value = email;
+            if (adminPinInput) adminPinInput.value = password;
+            switchAdminTab(false);
+          }, 1500);
+
+        } catch (err) {
+          console.error('Registration request error:', err);
+          regSubmitBtn.disabled = false;
+          regSubmitBtn.innerHTML = 'Daftarkan Akun Staf ke Faskes';
+          if (adminRegisterAlert) {
+            adminRegisterAlert.style.display = 'block';
+            adminRegisterAlert.style.background = 'rgba(239, 68, 68, 0.15)';
+            adminRegisterAlert.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+            adminRegisterAlert.style.color = '#fca5a5';
+            adminRegisterAlert.innerHTML = '⛔ Gagal menghubungi server. Pastikan backend aktif.';
+          }
+        }
       });
     }
 

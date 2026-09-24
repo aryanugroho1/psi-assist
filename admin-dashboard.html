@@ -274,6 +274,9 @@
       <div class="admin-tab-item" id="tab-audit">
         🛡️ Immutable Audit Trail
       </div>
+      <div class="admin-tab-item" id="tab-faskes">
+        🏥 Manajemen Faskes & Staf
+      </div>
     </div>
 
     <!-- Tab 1 Content: Queue & Appointment Management -->
@@ -597,8 +600,114 @@
         [2026-09-22 09:04:18] WA_INGEST: Voice note ingested for patient Rian -> encrypted to S3<br>
         [2026-09-22 09:05:18] WA_AUTO_PURGE: Message deleted from WhatsApp API endpoint &lt; 60s
       </div>
-    </div>
+    <!-- Tab 5 Content: Facility & Delegated Staff Management -->
+    <div class="data-table-card" id="view-faskes" style="display: none; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0;" id="faskes-detail-name">
+              Klinik Jiwa Sejahtera Pratama
+            </h3>
+            <span class="badge" id="faskes-detail-code" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700;">
+              KJS-01
+            </span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+            Kontrol Akses Berjenjang &bull; Lead Admin: <strong id="faskes-lead-admin" style="color: var(--text-primary);">Dr. Budi Santoso, MARS</strong> (<span id="faskes-lead-email">lead.admin@klinikjiwa.id</span>)
+          </p>
+        </div>
 
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button type="button" class="btn btn-secondary" id="btn-refresh-faskes" style="font-size: 0.82rem; padding: 8px 14px; display: flex; align-items: center; gap: 6px;">
+            🔄 Refresh Data
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-open-add-staff-modal" style="font-size: 0.82rem; padding: 8px 16px; font-weight: 700; background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%); display: flex; align-items: center; gap: 6px;">
+            + Tambah Staf Baru Langsung
+          </button>
+        </div>
+      </div>
+
+      <!-- Facility Cards: Quota & Enrollment Code -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 28px;">
+        <!-- Card 1: Kuota Staf -->
+        <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Kapasitas Staf Faskes</span>
+            <span class="badge" id="badge-quota-ratio" style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 700;">
+              3 / 15 Terdaftar
+            </span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="stat-active-staff-num">3</div>
+            <div style="font-size: 0.82rem; color: var(--text-muted);">staf aktif dari kuota maksimal <span id="stat-max-staff-quota">15</span></div>
+          </div>
+          <div style="background: rgba(255,255,255,0.08); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+            <div id="progress-staff-quota" style="background: linear-gradient(90deg, #10B981, #0284C7); height: 100%; width: 20%; transition: width 0.4s ease;"></div>
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">
+            Sisa slot pendaftaran staf: <strong id="stat-available-staff-slots" style="color: #38bdf8;">12 staf</strong>
+          </div>
+        </div>
+
+        <!-- Card 2: Kode Registrasi Mandiri Staf -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: var(--radius-md); padding: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: #38bdf8; text-transform: uppercase;">Kode Khusus Registrasi Faskes</span>
+            <span id="badge-enrollment-status" class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 700;">
+              ● Pendaftaran Aktif
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <code id="display-faskes-code" style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; color: #38bdf8; background: rgba(0,0,0,0.3); padding: 8px 14px; border-radius: 6px; letter-spacing: 1.5px; border: 1px dashed rgba(56, 189, 248, 0.4); flex: 1;">
+              KLINIK-JIWA-2026
+            </code>
+            <button type="button" class="btn btn-secondary" id="btn-copy-faskes-code" style="padding: 8px 12px; font-size: 0.8rem; white-space: nowrap;">
+              📋 Salin
+            </button>
+            <button type="button" class="btn btn-secondary" id="btn-rotate-faskes-code" style="padding: 8px 12px; font-size: 0.8rem; white-space: nowrap;" title="Acak Kode Baru jika kode lama bocor">
+              🔄 Rotasi
+            </button>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
+            <span>Berikan kode ini ke staf baru untuk registrasi mandiri.</span>
+            <button type="button" id="btn-toggle-enrollment-active" style="background: none; border: none; color: #f59e0b; text-decoration: underline; cursor: pointer; font-size: 0.76rem; padding: 0;">
+              Tutup Pendaftaran
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table: Registered Staff -->
+      <div style="margin-top: 10px;">
+        <h4 style="font-size: 0.98rem; font-weight: 800; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+          <span>👥 Daftar Staf & Admin Terdaftar di Faskes</span>
+        </h4>
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID Karyawan</th>
+                <th>Nama Lengkap</th>
+                <th>Email Dinas</th>
+                <th>Jabatan Operasional</th>
+                <th>Hak Akses (Role)</th>
+                <th>Status Akun</th>
+                <th>Aksi Kelola</th>
+              </tr>
+            </thead>
+            <tbody id="faskes-staff-tbody">
+              <tr>
+                <td colspan="7" style="text-align:center; padding: 32px; color: var(--text-muted);">
+                  ⏳ Memuat data staf faskes...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Strict RBAC HTTP 403 Forbidden Modal Simulation -->
@@ -1104,6 +1213,66 @@
     </div>
   </div>
 
+  <!-- Modal Tambah Staf Baru Langsung oleh Admin Utama Faskes -->
+  <div class="modal-overlay" id="admin-add-staff-modal" role="dialog" aria-modal="true">
+    <div class="auth-modal-dialog" style="border: 2px solid var(--color-teal); max-width: 500px;">
+      <div class="modal-header-banner" style="background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%); color: white;">
+        <div class="modal-header-title">
+          <h3 style="display: flex; align-items: center; gap: 8px;">
+            👥 Tambah Staf Baru Faskes
+          </h3>
+          <p>Delegasi Wewenang Operasional &bull; Kontrol Faskes Berjenjang</p>
+        </div>
+        <button class="modal-close-btn" id="btn-close-add-staff-modal">&times;</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+        <form id="form-add-staff" onsubmit="return false;">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Nama Lengkap Staf *</label>
+            <input type="text" id="add-staff-name" class="form-control" placeholder="Contoh: Rian Pratama, A.Md.RMIK" required style="width: 100%; padding: 8px 12px; font-size: 0.88rem;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">ID Karyawan / NIP *</label>
+              <input type="text" id="add-staff-id" class="form-control" placeholder="ADM-KASIR-018" required style="width: 100%; padding: 8px 12px; font-size: 0.88rem;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Hak Akses (Role) *</label>
+              <select id="add-staff-role" class="form-control" style="width: 100%; padding: 8px 12px; font-size: 0.88rem;">
+                <option value="ROLE_ADMIN" selected>ROLE_ADMIN (Staf Kasir/Loket)</option>
+                <option value="ROLE_ADMIN_LEAD">ROLE_ADMIN_LEAD (Kepala IT / Admin Utama)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Jabatan Operasional *</label>
+            <input type="text" id="add-staff-job-title" class="form-control" value="Staf Pendaftaran & Kasir" required style="width: 100%; padding: 8px 12px; font-size: 0.88rem;">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Email Dinas Staf *</label>
+            <input type="email" id="add-staff-email" class="form-control" placeholder="nama@klinikjiwa.id" required style="width: 100%; padding: 8px 12px; font-size: 0.88rem;">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Password Awal *</label>
+            <input type="password" id="add-staff-password" class="form-control" value="password123" required style="width: 100%; padding: 8px 12px; font-size: 0.88rem;">
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-add-staff" style="flex: 1; padding: 10px;">Batal</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-add-staff" style="flex: 2; padding: 10px; background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%); font-weight: 700;">
+              ✓ Daftarkan Staf
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="js/app.js"></script>
   <script>
@@ -1115,6 +1284,21 @@
       token: null,
 
       async login() {
+        const savedToken = sessionStorage.getItem('mindscribe_auth_token');
+        if (savedToken) {
+          this.token = savedToken;
+          try {
+            const me = await this.get('/auth/me');
+            if (me && me.user) {
+              this.user = me.user;
+              this.updateTopbarUser(me.user);
+              return true;
+            }
+          } catch (e) {
+            // saved token invalid, fallback
+          }
+        }
+
         try {
           const res = await fetch(`${this.BASE}/auth/login`, {
             method: 'POST',
@@ -1124,12 +1308,30 @@
           const data = await res.json();
           if (data.token) {
             this.token = data.token;
+            this.user = data.user;
+            this.updateTopbarUser(data.user);
             return true;
           }
         } catch (e) {
           console.warn('[ApiClient] Backend not reachable, running in offline mode.', e.message);
         }
         return false;
+      },
+
+      updateTopbarUser(user) {
+        if (!user) return;
+        const nameEl = document.querySelector('.admin-topbar div[style*="font-weight: 700; color: var(--text-primary)"]');
+        const roleEl = document.querySelector('.admin-topbar div[style*="color: var(--text-muted)"]');
+        const avatarEl = document.querySelector('.admin-topbar div[style*="border-radius: 50%"]');
+        if (nameEl && user.name) nameEl.textContent = user.name;
+        if (roleEl && (user.jobTitle || user.role)) {
+          const title = user.jobTitle || (user.role === 'ROLE_ADMIN_LEAD' ? 'Kepala Operasional Faskes' : 'Staf Pendaftaran & Kasir');
+          roleEl.innerHTML = `${title} &bull; ID: ${user.username || 'ADM-01'}`;
+        }
+        if (avatarEl && user.name) {
+          const initials = user.name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+          avatarEl.textContent = initials || 'AD';
+        }
       },
 
       async get(path) {
@@ -1541,21 +1743,23 @@
     const tabJadwal = document.getElementById('tab-jadwal');
     const tabKasir = document.getElementById('tab-kasir');
     const tabAudit = document.getElementById('tab-audit');
+    const tabFaskes = document.getElementById('tab-faskes');
 
     const viewAntrean = document.getElementById('view-antrean');
     const viewJadwal = document.getElementById('view-jadwal');
     const viewKasir = document.getElementById('view-kasir');
     const viewAudit = document.getElementById('view-audit');
+    const viewFaskes = document.getElementById('view-faskes');
 
-    const allTabs = [tabAntrean, tabJadwal, tabKasir, tabAudit];
-    const allViews = [viewAntrean, viewJadwal, viewKasir, viewAudit];
+    const allTabs = [tabAntrean, tabJadwal, tabKasir, tabAudit, tabFaskes];
+    const allViews = [viewAntrean, viewJadwal, viewKasir, viewAudit, viewFaskes];
 
     function activateTab(activeTab, activeView) {
-      allTabs.forEach(t => t.classList.remove('active'));
-      allViews.forEach(v => v.style.display = 'none');
+      allTabs.forEach(t => t && t.classList.remove('active'));
+      allViews.forEach(v => v && (v.style.display = 'none'));
 
-      activeTab.classList.add('active');
-      activeView.style.display = 'block';
+      if (activeTab) activeTab.classList.add('active');
+      if (activeView) activeView.style.display = 'block';
     }
 
     tabAntrean.addEventListener('click', () => activateTab(tabAntrean, viewAntrean));
@@ -1568,6 +1772,282 @@
       loadKasirTable();
     });
     tabAudit.addEventListener('click', () => activateTab(tabAudit, viewAudit));
+    if (tabFaskes) {
+      tabFaskes.addEventListener('click', () => {
+        activateTab(tabFaskes, viewFaskes);
+        loadFacilityData();
+      });
+    }
+
+    // ==========================================
+    // DELEGATED FACILITY & STAFF MANAGEMENT
+    // ==========================================
+    let currentFacilityData = null;
+
+    async function loadFacilityData() {
+      const data = await ApiClient.get('/admin/facility');
+      if (!data || !data.facility) return;
+      currentFacilityData = data.facility;
+      const f = data.facility;
+      const staffList = data.staffList || [];
+
+      // Update Facility Details
+      const nameEl = document.getElementById('faskes-detail-name');
+      const codeEl = document.getElementById('faskes-detail-code');
+      const leadAdminEl = document.getElementById('faskes-lead-admin');
+      const leadEmailEl = document.getElementById('faskes-lead-email');
+      const quotaRatioEl = document.getElementById('badge-quota-ratio');
+      const activeStaffNum = document.getElementById('stat-active-staff-num');
+      const maxStaffQuota = document.getElementById('stat-max-staff-quota');
+      const availableStaffSlots = document.getElementById('stat-available-staff-slots');
+      const progressQuota = document.getElementById('progress-staff-quota');
+
+      if (nameEl) nameEl.textContent = f.name;
+      if (codeEl) codeEl.textContent = f.facilityCode;
+      if (leadAdminEl) leadAdminEl.textContent = f.leadAdminName || 'Dr. Budi Santoso, MARS';
+      if (leadEmailEl) leadEmailEl.textContent = f.leadAdminEmail || 'lead.admin@klinikjiwa.id';
+      if (quotaRatioEl) quotaRatioEl.textContent = `${f.activeStaffCount} / ${f.maxStaffQuota} Terdaftar`;
+      if (activeStaffNum) activeStaffNum.textContent = f.activeStaffCount;
+      if (maxStaffQuota) maxStaffQuota.textContent = f.maxStaffQuota;
+      if (availableStaffSlots) availableStaffSlots.textContent = `${f.availableSlotsLeft} staf`;
+
+      if (progressQuota) {
+        const pct = Math.min(100, Math.round((f.activeStaffCount / f.maxStaffQuota) * 100));
+        progressQuota.style.width = `${pct}%`;
+      }
+
+      // Update Enrollment Code
+      const dispCode = document.getElementById('display-faskes-code');
+      const badgeStatus = document.getElementById('badge-enrollment-status');
+      const btnToggle = document.getElementById('btn-toggle-enrollment-active');
+
+      if (dispCode) dispCode.textContent = f.enrollmentCode;
+      if (badgeStatus) {
+        if (f.enrollmentActive) {
+          badgeStatus.style.background = 'rgba(16, 185, 129, 0.2)';
+          badgeStatus.style.color = '#34d399';
+          badgeStatus.textContent = '● Pendaftaran Aktif';
+        } else {
+          badgeStatus.style.background = 'rgba(239, 68, 68, 0.2)';
+          badgeStatus.style.color = '#fca5a5';
+          badgeStatus.textContent = '● Pendaftaran Ditutup';
+        }
+      }
+      if (btnToggle) {
+        btnToggle.textContent = f.enrollmentActive ? 'Tutup Pendaftaran' : 'Buka Kembali Pendaftaran';
+        btnToggle.style.color = f.enrollmentActive ? '#f59e0b' : '#34d399';
+      }
+
+      // Render Staff List
+      const tbody = document.getElementById('faskes-staff-tbody');
+      if (!tbody) return;
+
+      if (staffList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Belum ada staf terdaftar di faskes ini.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = staffList.map(st => {
+        const isLead = st.role === 'ROLE_ADMIN_LEAD';
+        const roleBadge = isLead
+          ? `<span class="badge" style="background:rgba(56, 189, 248, 0.2);color:#38bdf8;font-weight:700;">★ Admin Utama Faskes</span>`
+          : `<span class="badge" style="background:rgba(100, 116, 139, 0.2);color:var(--text-secondary);">Staf Operasional</span>`;
+
+        const statusBadge = st.isActive
+          ? `<span class="badge" style="background:rgba(16, 185, 129, 0.15);color:#10B981;">✓ Aktif</span>`
+          : `<span class="badge" style="background:rgba(239, 68, 68, 0.15);color:#ef4444;">Nonaktif</span>`;
+
+        const actionHtml = isLead
+          ? `<span style="font-size:0.75rem;color:var(--text-muted);">Penanggung Jawab</span>`
+          : `<button class="btn btn-secondary btn-toggle-staff-status" data-id="${st.id}" data-active="${st.isActive ? 'true' : 'false'}" data-name="${st.fullName}" style="padding:4px 8px;font-size:0.75rem;color:${st.isActive ? '#ef4444' : '#10B981'};border-color:${st.isActive ? '#ef4444' : '#10B981'};">
+              ${st.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+            </button>`;
+
+        return `<tr>
+          <td><code style="font-family:var(--font-mono);font-size:0.85rem;color:var(--color-teal);font-weight:700;">${st.staffIdCode}</code></td>
+          <td><strong>${st.fullName}</strong></td>
+          <td><span style="font-size:0.82rem;color:var(--text-secondary);">${st.email}</span></td>
+          <td>${st.jobTitle || 'Staf Operasional'}</td>
+          <td>${roleBadge}</td>
+          <td>${statusBadge}</td>
+          <td>${actionHtml}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Refresh Button
+    const btnRefreshFaskes = document.getElementById('btn-refresh-faskes');
+    if (btnRefreshFaskes) {
+      btnRefreshFaskes.addEventListener('click', async () => {
+        btnRefreshFaskes.disabled = true;
+        btnRefreshFaskes.textContent = '⏳ Memuat...';
+        await loadFacilityData();
+        btnRefreshFaskes.disabled = false;
+        btnRefreshFaskes.textContent = '🔄 Refresh Data';
+        if (window.showToast) window.showToast('✓ Data faskes dan staf diperbarui.', 'info');
+      });
+    }
+
+    // Copy Enrollment Code
+    const btnCopyCode = document.getElementById('btn-copy-faskes-code');
+    if (btnCopyCode) {
+      btnCopyCode.addEventListener('click', () => {
+        const code = document.getElementById('display-faskes-code')?.textContent?.trim() || 'KLINIK-JIWA-2026';
+        navigator.clipboard.writeText(code).then(() => {
+          btnCopyCode.textContent = '✓ Tersalin!';
+          setTimeout(() => { btnCopyCode.textContent = '📋 Salin'; }, 2000);
+          if (window.showToast) window.showToast(`📋 Kode faskes "${code}" disalin ke clipboard!`, 'success');
+        }).catch(() => {
+          prompt('Salin Kode Faskes:', code);
+        });
+      });
+    }
+
+    // Rotate Enrollment Code
+    const btnRotateCode = document.getElementById('btn-rotate-faskes-code');
+    if (btnRotateCode) {
+      btnRotateCode.addEventListener('click', async () => {
+        const prefix = 'KLINIK-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-2026';
+        const newCode = prompt('Masukkan Kode Baru Faskes (atau gunakan kode acak yang disarankan):', prefix);
+        if (!newCode) return;
+
+        const res = await ApiClient.put('/admin/facility/enrollment-code', {
+          newCode: newCode.trim(),
+          isActive: true
+        });
+
+        if (res && res.success) {
+          await loadFacilityData();
+          if (window.showToast) window.showToast(`✓ Kode khusus faskes berhasil dirotasi ke: ${res.enrollmentCode}`, 'success');
+        } else {
+          alert('Gagal merotasi kode: ' + (res?.message || 'Error'));
+        }
+      });
+    }
+
+    // Toggle Enrollment Active Status
+    const btnToggleEnrollment = document.getElementById('btn-toggle-enrollment-active');
+    if (btnToggleEnrollment) {
+      btnToggleEnrollment.addEventListener('click', async () => {
+        if (!currentFacilityData) return;
+        const currentActive = currentFacilityData.enrollmentActive;
+        const nextActive = !currentActive;
+
+        const res = await ApiClient.put('/admin/facility/enrollment-code', {
+          newCode: currentFacilityData.enrollmentCode,
+          isActive: nextActive
+        });
+
+        if (res && res.success) {
+          await loadFacilityData();
+          const statusText = nextActive ? 'dibuka kembali' : 'ditutup';
+          if (window.showToast) window.showToast(`Pendaftaran mandiri staf berhasil ${statusText}!`, 'info');
+        }
+      });
+    }
+
+    // Toggle Staff Active / Inactive (Delegated Click)
+    document.addEventListener('click', async (e) => {
+      const toggleBtn = e.target.closest('.btn-toggle-staff-status');
+      if (toggleBtn) {
+        e.preventDefault();
+        const staffId = toggleBtn.getAttribute('data-id');
+        const isActive = toggleBtn.getAttribute('data-active') === 'true';
+        const staffName = toggleBtn.getAttribute('data-name') || 'staf ini';
+        const willActive = !isActive;
+
+        const confirmMsg = willActive
+          ? `Aktifkan kembali akun staf ${staffName}?`
+          : `Nonaktifkan akun staf ${staffName}? Staf tidak akan dapat login ke portal operasional.`;
+
+        if (!confirm(confirmMsg)) return;
+
+        const res = await ApiClient.put(`/admin/facility/staff/${staffId}/toggle`, {
+          isActive: willActive
+        });
+
+        if (res && res.success) {
+          await loadFacilityData();
+          if (window.showToast) {
+            window.showToast(`✓ Status akun ${staffName} berhasil diubah menjadi ${willActive ? 'Aktif' : 'Nonaktif'}.`, 'success');
+          }
+        } else {
+          alert('Gagal mengubah status staf: ' + (res?.message || 'Error'));
+        }
+      }
+    });
+
+    // Add Staff Modal & Direct Provisioning
+    const addStaffModal = document.getElementById('admin-add-staff-modal');
+    const openAddStaffBtn = document.getElementById('btn-open-add-staff-modal');
+    const closeAddStaffBtn = document.getElementById('btn-close-add-staff-modal');
+    const cancelAddStaffBtn = document.getElementById('btn-cancel-add-staff');
+    const formAddStaff = document.getElementById('form-add-staff');
+
+    if (openAddStaffBtn) {
+      openAddStaffBtn.addEventListener('click', () => {
+        if (addStaffModal) {
+          addStaffModal.classList.add('active');
+          document.getElementById('add-staff-name')?.focus();
+        }
+      });
+    }
+
+    [closeAddStaffBtn, cancelAddStaffBtn].forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (addStaffModal) addStaffModal.classList.remove('active');
+        });
+      }
+    });
+
+    if (addStaffModal) {
+      addStaffModal.addEventListener('click', (e) => {
+        if (e.target === addStaffModal) addStaffModal.classList.remove('active');
+      });
+    }
+
+    if (formAddStaff) {
+      formAddStaff.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fullName = document.getElementById('add-staff-name')?.value?.trim();
+        const staffIdCode = document.getElementById('add-staff-id')?.value?.trim();
+        const role = document.getElementById('add-staff-role')?.value || 'ROLE_ADMIN';
+        const jobTitle = document.getElementById('add-staff-job-title')?.value?.trim();
+        const email = document.getElementById('add-staff-email')?.value?.trim();
+        const password = document.getElementById('add-staff-password')?.value;
+
+        if (!fullName || !staffIdCode || !email || !password) {
+          alert('Semua field wajib diisi!');
+          return;
+        }
+
+        const submitBtn = document.getElementById('btn-submit-add-staff');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Mendaftarkan...'; }
+
+        const res = await ApiClient.post('/admin/facility/staff', {
+          fullName,
+          staffIdCode,
+          role,
+          jobTitle,
+          email,
+          password
+        });
+
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '✓ Daftarkan Staf'; }
+
+        if (res && res.success) {
+          await loadFacilityData();
+          if (addStaffModal) addStaffModal.classList.remove('active');
+          formAddStaff.reset();
+          if (window.showToast) {
+            window.showToast(`✅ Staf ${fullName} berhasil ditambahkan ke faskes!`, 'success');
+          }
+        } else {
+          alert('Gagal menambahkan staf: ' + (res?.message || res?.error || 'Error'));
+        }
+      });
+    }
 
     // ==========================================
     // DYNAMIC DOCTOR & SLOT MANAGEMENT SYSTEM

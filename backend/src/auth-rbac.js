@@ -148,7 +148,7 @@ function verifyToken(token) {
 
 function authenticateCredentials(identifier, password, token2fa) {
   const cleanId = (identifier || '').trim().toLowerCase();
-  const user = SYSTEM_USERS.find(u => {
+  let user = SYSTEM_USERS.find(u => {
     const matchesUser = u.username.toLowerCase() === cleanId;
     const matchesEmail = u.email && u.email.toLowerCase() === cleanId;
     const matchesSip = u.sip && u.sip.toLowerCase() === cleanId;
@@ -156,10 +156,33 @@ function authenticateCredentials(identifier, password, token2fa) {
   });
 
   if (!user) {
+    // Check dynamic facility staff in SQLite database
+    try {
+      const { db } = require('./database');
+      const staff = db.findStaffByCredentials(cleanId, password);
+      if (staff) {
+        user = {
+          id: staff.id,
+          username: staff.staff_id_code,
+          email: staff.email,
+          name: staff.full_name,
+          role: staff.role, // ROLE_ADMIN or ROLE_ADMIN_LEAD
+          jobTitle: staff.job_title,
+          facilityId: staff.facility_id,
+          facilityName: staff.facility_name,
+          schemas: ['ops_schema'] // Strictly isolated from clinical_schema per UU PDP
+        };
+      }
+    } catch (e) {
+      console.warn('[auth-rbac] DB staff lookup notice:', e.message);
+    }
+  }
+
+  if (!user) {
     return {
       success: false,
       code: 'INVALID_CREDENTIALS',
-      message: 'Kombinasi kredensial (Email/SIP/Username) atau password salah.'
+      message: 'Kombinasi kredensial (Email/ID Staf/SIP) atau password salah.'
     };
   }
 
@@ -192,6 +215,9 @@ function authenticateCredentials(identifier, password, token2fa) {
       role: user.role,
       sip: user.sip || null,
       email: user.email || null,
+      jobTitle: user.jobTitle || null,
+      facilityId: user.facilityId || null,
+      facilityName: user.facilityName || null,
       schemas: user.schemas
     },
     token: generateToken(user)

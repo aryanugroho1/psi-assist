@@ -154,6 +154,38 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { status: 200, user });
     }
 
+    if (pathname === '/api/v1/auth/register-staff' && method === 'POST') {
+      const { parsed } = await parseBody(req);
+      if (!parsed.enrollmentCode || !parsed.fullName || !parsed.staffIdCode || !parsed.email || !parsed.password) {
+        return sendJson(res, 400, {
+          status: 400,
+          error: 'Bad Request',
+          message: 'Semua field (Kode Khusus Faskes, Nama Lengkap, ID Karyawan, Email, Password) wajib diisi.'
+        });
+      }
+      const result = db.registerStaffViaEnrollmentCode({
+        enrollmentCode: parsed.enrollmentCode,
+        fullName: parsed.fullName,
+        staffIdCode: parsed.staffIdCode,
+        email: parsed.email,
+        password: parsed.password,
+        jobTitle: parsed.jobTitle || 'Staf Pendaftaran & Kasir'
+      });
+      if (!result.success) {
+        return sendJson(res, 400, {
+          status: 400,
+          error: result.code || 'Registration Failed',
+          message: result.message
+        });
+      }
+      return sendJson(res, 201, {
+        status: 201,
+        success: true,
+        message: 'Akun staf berhasil didaftarkan. Silakan login ke Portal Operasional.',
+        staff: result.staff
+      });
+    }
+
     // -------------------------------------------------------------------------
     // 2. META WHATSAPP WEBHOOK GATEWAY
     // -------------------------------------------------------------------------
@@ -189,11 +221,11 @@ const server = http.createServer(async (req, res) => {
     // -------------------------------------------------------------------------
     if (pathname.startsWith('/api/v1/admin/')) {
       const user = extractAuthUser(req);
-      if (!user || user.role !== 'ROLE_ADMIN') {
+      if (!user || (user.role !== 'ROLE_ADMIN' && user.role !== 'ROLE_ADMIN_LEAD')) {
         return sendJson(res, 403, {
           status: 403,
           error: 'Forbidden',
-          message: 'Hanya peran ROLE_ADMIN yang berhak mengakses endpoint operasional ini.'
+          message: 'Hanya peran administrasi faskes (ROLE_ADMIN / ROLE_ADMIN_LEAD) yang berhak mengakses endpoint operasional ini.'
         });
       }
 
@@ -407,6 +439,88 @@ const server = http.createServer(async (req, res) => {
         const logs = db.getAuditLogs(30);
         return sendJson(res, 200, { status: 200, count: logs.length, logs });
       }
+
+      // 3.7 Facility & Delegated Staff Management
+      if (pathname === '/api/v1/admin/facility' && method === 'GET') {
+        const facilityId = user.facilityId || 'fac-sejahtera';
+        const facility = db.getFacilityInfo(facilityId);
+        const staffList = db.getFacilityStaffList(facilityId);
+        return sendJson(res, 200, {
+          status: 200,
+          facility,
+          staffList,
+          userRole: user.role
+        });
+      }
+
+      if (pathname === '/api/v1/admin/facility/staff' && method === 'POST') {
+        const { parsed } = await parseBody(req);
+        if (!parsed.fullName || !parsed.staffIdCode || !parsed.email || !parsed.password) {
+          return sendJson(res, 400, {
+            status: 400,
+            error: 'Bad Request',
+            message: 'Nama lengkap, ID Karyawan, email, dan password wajib diisi.'
+          });
+        }
+        const facilityId = user.facilityId || 'fac-sejahtera';
+        const result = db.createStaffDirectly({
+          facilityId,
+          fullName: parsed.fullName,
+          staffIdCode: parsed.staffIdCode,
+          email: parsed.email,
+          password: parsed.password,
+          role: parsed.role || 'ROLE_ADMIN',
+          jobTitle: parsed.jobTitle || 'Staf Operasional',
+          requester: user.username || user.name
+        });
+        if (!result.success) {
+          return sendJson(res, 400, { status: 400, error: result.code, message: result.message });
+        }
+        return sendJson(res, 201, {
+          status: 201,
+          success: true,
+          message: `Staf ${result.staff.fullName} berhasil ditambahkan oleh Admin Utama Faskes.`,
+          staff: result.staff
+        });
+      }
+
+      if (pathname === '/api/v1/admin/facility/enrollment-code' && method === 'PUT') {
+        const { parsed } = await parseBody(req);
+        const facilityId = user.facilityId || 'fac-sejahtera';
+        const result = db.updateFacilityEnrollmentCode(
+          facilityId,
+          parsed.newCode,
+          parsed.isActive !== undefined ? parsed.isActive : true,
+          user.username || user.name
+        );
+        if (!result.success) {
+          return sendJson(res, 400, { status: 400, error: 'Update Failed', message: result.message });
+        }
+        return sendJson(res, 200, {
+          status: 200,
+          success: true,
+          message: 'Kode registrasi khusus faskes berhasil diperbarui.',
+          enrollmentCode: result.enrollmentCode,
+          enrollmentActive: result.enrollmentActive
+        });
+      }
+
+      const toggleStaffMatch = pathname.match(/^\/api\/v1\/admin\/facility\/staff\/([\w-]+)\/toggle$/);
+      if (toggleStaffMatch && method === 'PUT') {
+        const staffId = toggleStaffMatch[1];
+        const { parsed } = await parseBody(req);
+        const result = db.toggleStaffActiveStatus(staffId, parsed.isActive, user.username || user.name);
+        if (!result.success) {
+          return sendJson(res, 400, { status: 400, error: 'Toggle Failed', message: result.message });
+        }
+        return sendJson(res, 200, {
+          status: 200,
+          success: true,
+          message: `Status aktif staf berhasil diubah menjadi ${result.isActive ? 'Aktif' : 'Nonaktif'}.`,
+          staffId: result.staffId,
+          isActive: result.isActive
+        });
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -521,7 +635,7 @@ const server = http.createServer(async (req, res) => {
     // -------------------------------------------------------------------------
     if (pathname.startsWith('/api/v1/clinical/')) {
       const user = extractAuthUser(req);
-      if (!user || user.role === 'ROLE_ADMIN') {
+      if (!user || user.role === 'ROLE_ADMIN' || user.role === 'ROLE_ADMIN_LEAD') {
         db.recordAudit(
           user ? user.username : 'ANONYMOUS',
           user ? user.role : 'UNKNOWN',
@@ -533,7 +647,7 @@ const server = http.createServer(async (req, res) => {
           status: 403,
           error: 'Forbidden',
           code: 'RBAC_CLINICAL_ISOLATION_VIOLATION',
-          message: 'Akses ditolak: Akun ROLE_ADMIN dilarang mengakses skema klinis psikiatri (clinical_schema) sesuai UU PDP No. 27/2022.'
+          message: 'Akses ditolak: Akun staf administrasi dilarang mengakses skema klinis psikiatri (clinical_schema) sesuai UU PDP No. 27/2022.'
         });
       }
       return sendJson(res, 200, { status: 200, message: 'Akses klinis diberikan kepada dokter yang sah.' });
