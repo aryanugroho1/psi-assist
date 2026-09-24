@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  psi-assist:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: psi-assist-platform
+    restart: unless-stopped
+    ports:
+      - "3000:3000"   # MindScribe Frontend, Dashboards & REST API
+      - "4983:4983"   # Drizzle Studio Real-Time Database GUI
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - STUDIO_PORT=4983
+      - DATABASE_PATH=/app/data/mindscribe.db
+      - JWT_SECRET=mindscribe-super-secure-secret-key-2026
+    volumes:
+      # Persistent volume for SQLite database across container restarts & rebuilds
+      - psi_database_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  psi_database_data:
+    name: psi_database_data

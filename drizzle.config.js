@@ -5,6 +5,6 @@ module.exports = defineConfig({
   out: './drizzle/migrations',
   dialect: 'sqlite',
   dbCredentials: {
-    url: './mindscribe.db'
+    url: process.env.DATABASE_PATH || './mindscribe.db'
   }
 });

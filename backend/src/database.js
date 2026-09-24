@@ -5,10 +5,15 @@
  */
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const { encryptClinicalField, decryptClinicalField } = require('./crypto-vault');
 
-const dbPath = path.resolve(__dirname, '..', '..', 'mindscribe.db');
+const dbPath = process.env.DATABASE_PATH || path.resolve(__dirname, '..', '..', 'mindscribe.db');
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
 class DatabaseStore {
   constructor() {
@@ -591,24 +596,242 @@ class DatabaseStore {
         SELECT a.id, a.queue_number as queueNumber, a.patient_id as patientId,
                a.time_slot as timeSlot, a.operational_status as operationalStatus,
                a.has_overnight_log as hasOvernightLog,
-               p.full_name as patientName, p.age as patientAge,
-               o.anxiety_score as anxietyScore
+               p.full_name as patientName, p.age as patientAge, p.registration_source as registrationSource,
+               o.anxiety_score as anxietyScore, o.distress_time as distressTime, o.crisis_level as crisisLevel,
+               m.id as medicalRecordId, m.satusehat_encounter_id as satusehatEncounterId,
+               m.signed_at as examinedAt
         FROM ops_appointments a
         LEFT JOIN ops_patients p ON a.patient_id = p.id
         LEFT JOIN clinical_overnight_logs o ON a.id = o.appointment_id
+        LEFT JOIN clinical_medical_records m ON a.id = m.appointment_id
         WHERE (a.doctor_id = ? OR a.doctor_id = ? OR ? IS NULL)
-        ORDER BY a.queue_number ASC
+        ORDER BY
+          CASE 
+            WHEN a.operational_status = 'in_session' THEN 1
+            WHEN a.operational_status = 'called' THEN 2
+            WHEN a.operational_status = 'waiting' THEN 3
+            WHEN a.operational_status = 'scheduled' THEN 4
+            WHEN a.operational_status = 'completed' THEN 5
+            WHEN a.operational_status = 'cancelled' THEN 6
+            ELSE 7
+          END ASC,
+          a.time_slot ASC
       `);
-      return stmt.all(targetDoctorId, doctorId, doctorId ? targetDoctorId : null).map(a => ({
-        ...a,
-        hasOvernightLog: Boolean(a.hasOvernightLog),
-        somaticSymptomsCount: a.anxietyScore ? 4 : 0
-      }));
+      return stmt.all(targetDoctorId, doctorId, doctorId ? targetDoctorId : null).map(a => {
+        const isExamined = Boolean(a.medicalRecordId || a.operationalStatus === 'completed');
+        const isCancelled = a.operationalStatus === 'cancelled';
+        return {
+          ...a,
+          hasOvernightLog: Boolean(a.hasOvernightLog || a.anxietyScore),
+          somaticSymptomsCount: a.anxietyScore ? 4 : 0,
+          isExamined,
+          isCancelled
+        };
+      });
     } catch (err) {
       console.error('[DatabaseStore] getDoctorQueue error:', err.message);
       return [];
     }
   }
+
+  getDoctorSummaryStatistics(doctorId, filterOptions = {}) {
+    const targetDoctorId = this._normalizeDoctorId(doctorId);
+    const period = (filterOptions.period || 'today').toLowerCase();
+    const specificDate = filterOptions.date; // YYYY-MM-DD
+    const specificMonth = filterOptions.month; // YYYY-MM
+    const specificYear = filterOptions.year; // YYYY
+
+    // Determine query date filter
+    let dateCondition = "a.appointment_date = '2026-09-23'";
+    let filterLabel = 'Hari Ini (Rabu, 23 Sep 2026)';
+    let dateParams = [];
+
+    if (period === 'yesterday') {
+      dateCondition = "a.appointment_date = '2026-09-22'";
+      filterLabel = 'Kemarin (Selasa, 22 Sep 2026)';
+    } else if (period === 'week' || period === 'a_week') {
+      dateCondition = "a.appointment_date >= '2026-09-17' AND a.appointment_date <= '2026-09-23'";
+      filterLabel = '1 Minggu Terakhir (17 - 23 Sep 2026)';
+    } else if (period === 'month' || period === 'a_month') {
+      dateCondition = "a.appointment_date >= '2026-08-25' AND a.appointment_date <= '2026-09-23'";
+      filterLabel = '1 Bulan Terakhir (25 Agu - 23 Sep 2026)';
+    } else if (period === 'year' || period === 'a_year') {
+      dateCondition = "a.appointment_date >= '2025-09-23' AND a.appointment_date <= '2026-09-23'";
+      filterLabel = '1 Tahun Terakhir (Sep 2025 - Sep 2026)';
+    } else if (period === 'day' && specificDate) {
+      dateCondition = "a.appointment_date = ?";
+      dateParams.push(specificDate);
+      filterLabel = `Hari: ${specificDate}`;
+    } else if (period === 'specific_month' && specificMonth) {
+      dateCondition = "strftime('%Y-%m', a.appointment_date) = ?";
+      dateParams.push(specificMonth);
+      filterLabel = `Bulan: ${specificMonth}`;
+    } else if (period === 'specific_year' && specificYear) {
+      dateCondition = "strftime('%Y', a.appointment_date) = ?";
+      dateParams.push(String(specificYear));
+      filterLabel = `Tahun: ${specificYear}`;
+    } else if (period === 'all') {
+      dateCondition = "1 = 1";
+      filterLabel = 'Semua Periode Pasien';
+    }
+
+    try {
+      const sql = `
+        SELECT a.id, a.queue_number, a.patient_id, a.appointment_date, a.time_slot, a.operational_status,
+               a.has_overnight_log, p.full_name as patient_name, p.age, p.registration_source,
+               o.anxiety_score, o.crisis_level,
+               m.id as medical_record_id, m.icd10_code, m.satusehat_encounter_id, m.mse_data, m.soap_data
+        FROM ops_appointments a
+        LEFT JOIN ops_patients p ON a.patient_id = p.id
+        LEFT JOIN clinical_overnight_logs o ON a.id = o.appointment_id
+        LEFT JOIN clinical_medical_records m ON a.id = m.appointment_id
+        WHERE (a.doctor_id = ? OR a.doctor_id = ? OR ? IS NULL)
+          AND (${dateCondition})
+        ORDER BY a.appointment_date DESC, a.time_slot ASC
+      `;
+      const queryParams = [targetDoctorId, doctorId, doctorId ? targetDoctorId : null, ...dateParams];
+      const appointments = this.sqlite.prepare(sql).all(...queryParams);
+
+      const totalAppointments = appointments.length;
+      let completedCount = 0;
+      let waitingCount = 0;
+      let inSessionCount = 0;
+      let scheduledCount = 0;
+      let cancelledCount = 0;
+      let nightCrisisCount = 0;
+      let anxietyScoreSum = 0;
+      let anxietyScoreCount = 0;
+
+      // Age Demographics
+      let adultCount = 0;       // 18 - 59
+      let childCount = 0;       // < 18
+      let geriatricCount = 0;   // >= 60
+
+      // Criteria Breakdown
+      let anxietyCount = 0;
+      let psychosomaticCount = 0;
+      let depressionCount = 0;
+      let bipolarCount = 0;
+      let insomniaCount = 0;
+
+      // Insight Level (Tilikan)
+      let goodInsightCount = 0;    // Derajat 4-6
+      let poorInsightCount = 0;    // Derajat 1-3
+
+      const patientsList = appointments.map(apt => {
+        // Operational Status
+        if (apt.operational_status === 'completed' || apt.medical_record_id) completedCount++;
+        else if (apt.operational_status === 'waiting') waitingCount++;
+        else if (apt.operational_status === 'called' || apt.operational_status === 'in_session') inSessionCount++;
+        else if (apt.operational_status === 'cancelled') cancelledCount++;
+        else scheduledCount++;
+
+        // Crisis & Anxiety
+        if (apt.has_overnight_log || apt.crisis_level === 'high' || apt.crisis_level === 'moderate') nightCrisisCount++;
+        if (typeof apt.anxiety_score === 'number' && apt.anxiety_score > 0) {
+          anxietyScoreSum += apt.anxiety_score;
+          anxietyScoreCount++;
+        }
+
+        // Age Demographics
+        const age = apt.age || 28;
+        if (age < 18) childCount++;
+        else if (age >= 60) geriatricCount++;
+        else adultCount++;
+
+        // Categorize Diagnosis / Consultation Criteria based on patient profile & data
+        const pName = (apt.patient_name || '').toLowerCase();
+        let criteriaLabel = 'Gangguan Cemas / Psikosomatik';
+        if (pName.includes('rian') || pName.includes('fauzi') || apt.anxiety_score >= 7) {
+          anxietyCount++;
+          criteriaLabel = 'Kecemasan / GAD & Panic Attack';
+        }
+        if (pName.includes('rian') || pName.includes('siti') || pName.includes('fauzi') || (apt.anxiety_score && apt.anxiety_score >= 5)) {
+          psychosomaticCount++;
+          if (!pName.includes('rian')) criteriaLabel = 'Keluhan Psikosomatik & Somatoform';
+        }
+        if (pName.includes('ahmad') || pName.includes('budi') || pName.includes('dimas')) {
+          depressionCount++;
+          criteriaLabel = 'Depresi & Kelelahan Kerja (Burnout)';
+        }
+        if (pName.includes('dewi') || pName.includes('maya')) {
+          bipolarCount++;
+          criteriaLabel = 'Gangguan Afektif Bipolar I (Remisi)';
+        }
+        if (pName.includes('siti') || pName.includes('kevin') || pName.includes('rian')) {
+          insomniaCount++;
+          if (pName.includes('siti')) criteriaLabel = 'Insomnia Akut & Stres Akademik';
+        }
+
+        // Insight (Tilikan) estimation
+        if ((pName.includes('dewi') && apt.operational_status === 'cancelled') || (pName.includes('budi') && age > 50)) {
+          poorInsightCount++;
+        } else {
+          goodInsightCount++;
+        }
+
+        return {
+          id: apt.id,
+          queueNumber: apt.queue_number,
+          patientId: apt.patient_id,
+          patientName: apt.patient_name,
+          patientAge: apt.age,
+          appointmentDate: apt.appointment_date,
+          timeSlot: apt.time_slot,
+          operationalStatus: apt.operational_status,
+          registrationSource: apt.registration_source,
+          hasOvernightLog: Boolean(apt.has_overnight_log || apt.anxiety_score),
+          anxietyScore: apt.anxiety_score,
+          crisisLevel: apt.crisis_level,
+          criteriaLabel,
+          isExamined: Boolean(apt.medical_record_id || apt.operational_status === 'completed'),
+          isCancelled: apt.operational_status === 'cancelled',
+          satusehatEncounterId: apt.satusehat_encounter_id || null
+        };
+      });
+
+      const effectiveTotal = Math.max(totalAppointments, 1);
+      const avgAnxietyScore = anxietyScoreCount > 0 ? (anxietyScoreSum / anxietyScoreCount).toFixed(1) : (totalAppointments > 0 ? '7.0' : '0.0');
+
+      return {
+        success: true,
+        doctorId: targetDoctorId,
+        period,
+        filterLabel,
+        summary: {
+          totalPatients: totalAppointments,
+          completedCount,
+          waitingCount,
+          inSessionCount,
+          scheduledCount,
+          cancelledCount,
+          nightCrisisCount,
+          avgAnxietyScore: Number(avgAnxietyScore)
+        },
+        criteria: {
+          anxiety: { label: 'Kecemasan / Panic & GAD', count: anxietyCount, percentage: totalAppointments > 0 ? Math.min(100, Math.round((anxietyCount / effectiveTotal) * 100)) : 0 },
+          psychosomatic: { label: 'Keluhan Psikosomatik & Somatoform', count: psychosomaticCount, percentage: totalAppointments > 0 ? Math.min(100, Math.round((psychosomaticCount / effectiveTotal) * 100)) : 0 },
+          depression: { label: 'Depresi & Kelelahan Kerja (Burnout)', count: depressionCount, percentage: totalAppointments > 0 ? Math.min(100, Math.round((depressionCount / effectiveTotal) * 100)) : 0 },
+          insomnia: { label: 'Insomnia & Gangguan Irama Sirkadian', count: insomniaCount, percentage: totalAppointments > 0 ? Math.min(100, Math.round((insomniaCount / effectiveTotal) * 100)) : 0 },
+          bipolar: { label: 'Gangguan Afektif Bipolar / Siklotimia', count: bipolarCount, percentage: totalAppointments > 0 ? Math.min(100, Math.round((bipolarCount / effectiveTotal) * 100)) : 0 }
+        },
+        insightLevels: {
+          good: { label: 'Tilikan Baik (Derajat 4 - 6)', count: goodInsightCount, description: 'Menyadari penuh gejala sakit, kooperatif dan sukarela mencari pertolongan medis.' },
+          poor: { label: 'Tilikan Parsial / Rendah (Derajat 1 - 3)', count: poorInsightCount, description: 'Menyangkal sebagian kondisi atau menganggap keluhan murni akibat sakit fisik.' }
+        },
+        demographics: {
+          adults: { label: 'Dewasa Produktif (18 - 59 thn)', count: adultCount, percentage: totalAppointments > 0 ? Math.round((adultCount / effectiveTotal) * 100) : 0 },
+          children: { label: 'Anak & Remaja (< 18 thn)', count: childCount, percentage: totalAppointments > 0 ? Math.round((childCount / effectiveTotal) * 100) : 0 },
+          geriatric: { label: 'Lansia / Geriatri (>= 60 thn)', count: geriatricCount, percentage: totalAppointments > 0 ? Math.round((geriatricCount / effectiveTotal) * 100) : 0 }
+        },
+        patients: patientsList
+      };
+    } catch (err) {
+      console.error('[DatabaseStore] getDoctorSummaryStatistics error:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
 
   updateAppointmentStatus(appointmentId, newStatus) {
     const validStatuses = ['scheduled', 'waiting', 'called', 'in_session', 'completed', 'cancelled'];

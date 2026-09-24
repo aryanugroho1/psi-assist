@@ -4,9 +4,14 @@
  */
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 const { encryptClinicalField } = require('../backend/src/crypto-vault');
 
-const dbPath = path.resolve(__dirname, '..', 'mindscribe.db');
+const dbPath = process.env.DATABASE_PATH || path.resolve(__dirname, '..', 'mindscribe.db');
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 const db = new Database(dbPath);
 
 console.log(`[Seed] Initializing SQLite database at: ${dbPath}`);
@@ -348,6 +353,54 @@ insertOvernight.run(
   'mild'
 );
 
+// Voice Note for Siti
+insertVN.run(
+  'vn-siti-01',
+  'onl-siti-01',
+  35,
+  'vault://encrypted/2026/09/22/vn-siti-01.aes',
+  'kms-key-psi-0922',
+  'wamid.HBgLMDg5ODcyMDIx...==',
+  new Date(Date.now() - 5.9 * 3600 * 1000).toISOString(),
+  'ephem-tok-89124-valid',
+  Date.now() + 60000,
+  new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+);
+
+// Probes for Siti
+insertProbe.run(
+  'prb-siti-01',
+  'onl-siti-01',
+  1,
+  'Retardasi Onset Tidur & Nyeri Kepala Tegang',
+  '[00:10]',
+  10.0,
+  encryptClinicalField('Mbak Siti, di pesan suara semalam Anda mengeluhkan sulit sekali memejamkan mata sampai jam 2 pagi dengan kepala berdenyut tegang. Sudah berapa minggu pola sulit tidur ini berlangsung? Jam berapa biasanya Mbak Siti baru bisa terlelap?'),
+  encryptClinicalField('Menilai keparahan gangguan onset tidur (initial insomnia) dan mengevaluasi komorbiditas Tension-Type Headache (TTH).')
+);
+
+insertProbe.run(
+  'prb-siti-02',
+  'onl-siti-01',
+  2,
+  'Stresor Skripsi & Perfeksionisme Akademik',
+  '[00:22]',
+  22.0,
+  encryptClinicalField('Semalam terdengar suara isak tangis ketika menceritakan target revisi bab 4. Apakah ada ketakutan berlebih akan kegagalan atau merasa tidak mampu menyelesaikan skripsi tepat waktu?'),
+  encryptClinicalField('Mengeksplorasi distorsi kognitif katastrofik, stresor akademik, serta tekanan ekspektasi keluarga.')
+);
+
+insertProbe.run(
+  'prb-siti-03',
+  'onl-siti-01',
+  3,
+  'Skrining Kafein & Penggunaan Obat Bebas (OTC)',
+  '[00:31]',
+  31.0,
+  encryptClinicalField('Untuk menahan kantuk di siang hari atau memaksakan tidur di malam hari, apakah Mbak Siti mengonsumsi kopi berlebih atau pernah meminum obat tidur warung/antihistamin?'),
+  encryptClinicalField('Eksklusi faktor ekstrinsik sleep hygiene yang buruk dan mencegah risiko penyalahgunaan sedatif bebas.')
+);
+
 const insertMedRec = db.prepare(`INSERT INTO clinical_medical_records (id, appointment_id, doctor_id, patient_id, mse_data, soap_data, icd10_code, satusehat_encounter_id, satusehat_sync_status, signed_by_doctor_name, signed_by_doctor_sip) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
 const plainMSE = '{"moodAffect":"Mood cemas, afek serasi.","thoughtFormContent":"Bentuk pikir koheren, ruminasi kerja.","perception":"Halusinasi disangkal (-).","insightRisk":"Tilikan derajat 4, risiko bunuh diri rendah."}';
@@ -381,5 +434,85 @@ insertMedRec.run(
   '503/SIP-DSKJ/2026/058'
 );
 
-console.log('[Seed] Database seeded with 13 synchronized patients and schedules across both doctors successfully!');
+// 8. Historical Appointments for Multi-Period Clinical Analytics
+const insertHistApt = db.prepare(`
+  INSERT OR REPLACE INTO ops_appointments (
+    id, queue_number, patient_id, doctor_id, appointment_date, time_slot,
+    operational_status, payment_status, has_overnight_log, created_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const historicalAppointments = [
+  // --- YESTERDAY (2026-09-22) ---
+  { id: 'apt-hist-0922-01', q: '#A-01', p: 'pat-mega', d: 'doc-hendra', date: '2026-09-22', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90801', icd: 'F41.1' },
+  { id: 'apt-hist-0922-02', q: '#A-02', p: 'pat-fajar', d: 'doc-hendra', date: '2026-09-22', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90802', icd: 'F32.0' },
+  { id: 'apt-hist-0922-03', q: '#A-03', p: 'pat-ratna', d: 'doc-hendra', date: '2026-09-22', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90803', icd: 'G47.0' },
+  { id: 'apt-hist-0922-04', q: '#A-04', p: 'pat-bambang', d: 'doc-hendra', date: '2026-09-22', slot: '11:15 - 11:45', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90804', icd: 'F45.0' },
+  { id: 'apt-hist-0922-05', q: '#A-05', p: 'pat-cindy', d: 'doc-hendra', date: '2026-09-22', slot: '13:30 - 14:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90805', icd: 'F43.2' },
+  { id: 'apt-hist-0922-06', q: '#A-06', p: 'pat-rian', d: 'doc-hendra', date: '2026-09-22', slot: '14:30 - 15:00', status: 'cancelled', pay: 'refunded', vn: 1 },
+
+  // --- THIS WEEK (2026-09-20 & 2026-09-18) ---
+  { id: 'apt-hist-0920-01', q: '#A-01', p: 'pat-dewi', d: 'doc-hendra', date: '2026-09-20', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90710', icd: 'F31.7' },
+  { id: 'apt-hist-0920-02', q: '#A-02', p: 'pat-dimas', d: 'doc-hendra', date: '2026-09-20', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90711', icd: 'F41.0' },
+  { id: 'apt-hist-0920-03', q: '#A-03', p: 'pat-maya', d: 'doc-hendra', date: '2026-09-20', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90712', icd: 'F31.1' },
+  { id: 'apt-hist-0920-04', q: '#A-04', p: 'pat-kevin', d: 'doc-hendra', date: '2026-09-20', slot: '11:15 - 11:45', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90713', icd: 'G47.0' },
+
+  { id: 'apt-hist-0918-01', q: '#A-01', p: 'pat-fauzi', d: 'doc-hendra', date: '2026-09-18', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90601', icd: 'F32.0' },
+  { id: 'apt-hist-0918-02', q: '#A-02', p: 'pat-siti', d: 'doc-hendra', date: '2026-09-18', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90602', icd: 'G47.0' },
+  { id: 'apt-hist-0918-03', q: '#A-03', p: 'pat-budi', d: 'doc-hendra', date: '2026-09-18', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-90603', icd: 'F32.1' },
+
+  // --- EARLIER THIS MONTH (2026-09-08) ---
+  { id: 'apt-hist-0908-01', q: '#A-01', p: 'pat-rian', d: 'doc-hendra', date: '2026-09-08', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-88120', icd: 'F41.1' },
+  { id: 'apt-hist-0908-02', q: '#A-02', p: 'pat-mega', d: 'doc-hendra', date: '2026-09-08', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-88121', icd: 'F41.0' },
+  { id: 'apt-hist-0908-03', q: '#A-03', p: 'pat-fajar', d: 'doc-hendra', date: '2026-09-08', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-88122', icd: 'F32.0' },
+  { id: 'apt-hist-0908-04', q: '#A-04', p: 'pat-ratna', d: 'doc-hendra', date: '2026-09-08', slot: '11:15 - 11:45', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-88123', icd: 'G47.0' },
+
+  // --- LAST MONTH (2026-08-25, 2026-08-22, 2026-08-10) ---
+  { id: 'apt-hist-0825-01', q: '#A-01', p: 'pat-rian', d: 'doc-hendra', date: '2026-08-25', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-87004', icd: 'F41.0' },
+  { id: 'apt-hist-0825-02', q: '#A-02', p: 'pat-dimas', d: 'doc-hendra', date: '2026-08-25', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-87005', icd: 'F41.1' },
+  { id: 'apt-hist-0825-03', q: '#A-03', p: 'pat-bambang', d: 'doc-hendra', date: '2026-08-25', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-87006', icd: 'F45.0' },
+
+  { id: 'apt-hist-0822-01', q: '#A-01', p: 'pat-dewi', d: 'doc-hendra', date: '2026-08-22', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-86910', icd: 'F31.7' },
+  { id: 'apt-hist-0822-02', q: '#A-02', p: 'pat-cindy', d: 'doc-hendra', date: '2026-08-22', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-86911', icd: 'F43.2' },
+  { id: 'apt-hist-0822-03', q: '#A-03', p: 'pat-maya', d: 'doc-hendra', date: '2026-08-22', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-86912', icd: 'F31.1' },
+
+  { id: 'apt-hist-0810-01', q: '#A-01', p: 'pat-siti', d: 'doc-hendra', date: '2026-08-10', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-86214', icd: 'Z73.0' },
+  { id: 'apt-hist-0810-02', q: '#A-02', p: 'pat-fauzi', d: 'doc-hendra', date: '2026-08-10', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-86215', icd: 'F32.0' },
+  { id: 'apt-hist-0810-03', q: '#A-03', p: 'pat-kevin', d: 'doc-hendra', date: '2026-08-10', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-86216', icd: 'G47.0' },
+
+  // --- EARLIER THIS YEAR (2026-06-20 & 2026-03-15) ---
+  { id: 'apt-hist-0620-01', q: '#A-01', p: 'pat-dewi', d: 'doc-hendra', date: '2026-06-20', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-84220', icd: 'F31.7' },
+  { id: 'apt-hist-0620-02', q: '#A-02', p: 'pat-budi', d: 'doc-hendra', date: '2026-06-20', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-84221', icd: 'F32.0' },
+  { id: 'apt-hist-0620-03', q: '#A-03', p: 'pat-fajar', d: 'doc-hendra', date: '2026-06-20', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-84222', icd: 'F41.1' },
+
+  { id: 'apt-hist-0315-01', q: '#A-01', p: 'pat-dewi', d: 'doc-hendra', date: '2026-03-15', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-81014', icd: 'F31.1' },
+  { id: 'apt-hist-0315-02', q: '#A-02', p: 'pat-ratna', d: 'doc-hendra', date: '2026-03-15', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-81015', icd: 'G47.0' },
+  { id: 'apt-hist-0315-03', q: '#A-03', p: 'pat-dimas', d: 'doc-hendra', date: '2026-03-15', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-81016', icd: 'F41.0' },
+
+  // --- LAST YEAR (2025-11-14 & 2025-08-19) ---
+  { id: 'apt-hist-2511-01', q: '#A-01', p: 'pat-budi', d: 'doc-hendra', date: '2025-11-14', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-75110', icd: 'F32.1' },
+  { id: 'apt-hist-2511-02', q: '#A-02', p: 'pat-bambang', d: 'doc-hendra', date: '2025-11-14', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-75111', icd: 'F45.0' },
+  { id: 'apt-hist-2511-03', q: '#A-03', p: 'pat-mega', d: 'doc-hendra', date: '2025-11-14', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-75112', icd: 'F41.0' },
+  { id: 'apt-hist-2511-04', q: '#A-04', p: 'pat-fauzi', d: 'doc-hendra', date: '2025-11-14', slot: '11:15 - 11:45', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-75113', icd: 'F32.0' },
+
+  { id: 'apt-hist-2508-01', q: '#A-01', p: 'pat-rian', d: 'doc-hendra', date: '2025-08-19', slot: '09:00 - 09:30', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-74801', icd: 'F41.1' },
+  { id: 'apt-hist-2508-02', q: '#A-02', p: 'pat-dewi', d: 'doc-hendra', date: '2025-08-19', slot: '09:45 - 10:15', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-74802', icd: 'F31.7' },
+  { id: 'apt-hist-2508-03', q: '#A-03', p: 'pat-fajar', d: 'doc-hendra', date: '2025-08-19', slot: '10:30 - 11:00', status: 'completed', pay: 'paid', vn: 0, enc: 'FHIR-ENC-74803', icd: 'F41.0' }
+];
+
+historicalAppointments.forEach(row => {
+  insertHistApt.run(
+    row.id, row.q, row.p, row.d, row.date, row.slot,
+    row.status, row.pay, row.vn, `${row.date} 08:00:00`
+  );
+  if (row.enc) {
+    insertMedRec.run(
+      `mr-${row.id}`, row.id, row.d, row.p,
+      plainMSE, plainSOAP, row.icd || 'F41.1',
+      row.enc, 'synced', 'dr. Hendra, Sp.KJ', '503/SIP-DSKJ/2026/042'
+    );
+  }
+});
+
+console.log('[Seed] Database seeded with 13 synchronized patients, schedules, and full historical analytics appointments across both doctors successfully!');
 db.close();

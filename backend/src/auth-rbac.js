@@ -50,6 +50,7 @@ const SYSTEM_USERS = [
 function generateToken(user) {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
   const payload = Buffer.from(JSON.stringify({
+    id: user.id,
     sub: user.id,
     username: user.username,
     name: user.name,

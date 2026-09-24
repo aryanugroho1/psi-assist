@@ -4,6 +4,8 @@
  */
 const http = require('http');
 const url = require('url');
+const path = require('path');
+const fs = require('fs');
 const { db } = require('./database');
 const { authenticateCredentials, verifyToken } = require('./auth-rbac');
 const {
@@ -47,7 +49,10 @@ function extractAuthUser(req) {
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const token = authHeader.split(' ')[1];
-  return verifyToken(token);
+  const decoded = verifyToken(token);
+  if (!decoded) return null;
+  if (!decoded.id && decoded.sub) decoded.id = decoded.sub;
+  return decoded;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -66,6 +71,31 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    // Serve Static Frontend Files (doctor-dashboard.html, admin-dashboard.html, index.html, css, js)
+    if (!pathname.startsWith('/api/')) {
+      const publicDir = path.resolve(__dirname, '..', '..');
+      let reqPath = pathname === '/' ? '/index.html' : pathname;
+      const safePath = path.normalize(reqPath).replace(/^(\.\.[\/\\])+/, '');
+      const filePath = path.join(publicDir, safePath);
+
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        const ext = path.extname(filePath).toLowerCase();
+        const mimeTypes = {
+          '.html': 'text/html; charset=utf-8',
+          '.css': 'text/css; charset=utf-8',
+          '.js': 'application/javascript; charset=utf-8',
+          '.json': 'application/json; charset=utf-8',
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.svg': 'image/svg+xml',
+          '.ico': 'image/x-icon'
+        };
+        const contentType = mimeTypes[ext] || 'application/octet-stream';
+        res.writeHead(200, { 'Content-Type': contentType });
+        return fs.createReadStream(filePath).pipe(res);
+      }
+    }
+
     // -------------------------------------------------------------------------
     // 1. PUBLIC & AUTH ROUTES
     // -------------------------------------------------------------------------
@@ -377,6 +407,12 @@ const server = http.createServer(async (req, res) => {
       if (pathname === '/api/v1/doctor/queue' && method === 'GET') {
         const queue = db.getDoctorQueue(user.id);
         return sendJson(res, 200, { status: 200, count: queue.length, queue });
+      }
+
+      // 4.1b Doctor Summary & Clinical Statistics Dashboard
+      if (pathname === '/api/v1/doctor/summary-statistics' && method === 'GET') {
+        const stats = db.getDoctorSummaryStatistics(user.id, parsedUrl.query);
+        return sendJson(res, 200, stats);
       }
 
       // 4.2 Overnight Log & Evidence Probes

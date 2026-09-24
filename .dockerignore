@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log*
+.git
+.gitignore
+.gemini
+brain
+scratch
+*.tmp
+.DS_Store
+Thumbs.db

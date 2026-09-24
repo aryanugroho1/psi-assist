@@ -148,6 +148,68 @@
       color: #FCD34D;
     }
 
+    .patient-queue-card.examined {
+      border: 1.5px solid #059669 !important;
+      background: rgba(5, 150, 105, 0.08) !important;
+    }
+
+    .patient-queue-card.examined:hover {
+      border-color: #10B981 !important;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+    }
+
+    .patient-queue-card.cancelled {
+      border: 1px dashed rgba(239, 68, 68, 0.45) !important;
+      background: rgba(239, 68, 68, 0.04) !important;
+      opacity: 0.72;
+    }
+
+    .patient-queue-card.cancelled:hover {
+      opacity: 0.95;
+      border-color: #EF4444 !important;
+    }
+
+    .badge-examined {
+      background: rgba(16, 185, 129, 0.18);
+      color: #10B981;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .badge-cancelled-status {
+      background: rgba(239, 68, 68, 0.15);
+      color: #EF4444;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .queue-filter-btn {
+      transition: all 0.15s ease;
+    }
+
+    .queue-filter-btn:hover {
+      color: var(--text-primary) !important;
+    }
+
+    .queue-filter-btn.active {
+      background: var(--bg-surface) !important;
+      color: var(--color-teal) !important;
+      font-weight: 800 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
     /* Column 2: VN Analyzer & Deep Dive Interview Guide */
     .col-center-workspace {
       display: flex;
@@ -253,6 +315,48 @@
         grid-template-columns: 260px 1fr 380px;
       }
     }
+    /* Doctor Summary & Multi-Period Statistics Controls */
+    .btn-period-preset {
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 6px 13px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface-alt);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      user-select: none;
+    }
+    .btn-period-preset:hover {
+      background: var(--bg-surface);
+      color: var(--color-teal);
+      border-color: var(--color-teal);
+    }
+    .btn-period-preset.active {
+      background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%) !important;
+      color: #ffffff !important;
+      border-color: transparent !important;
+      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.35);
+    }
+    .stat-input-control {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      padding: 5px 9px;
+      font-size: 0.78rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color var(--transition-fast);
+    }
+    .stat-input-control:focus {
+      border-color: var(--color-teal);
+      box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+    }
   </style>
 </head>
 <body>
@@ -270,7 +374,23 @@
       </span>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 18px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <!-- Workspace View Switcher (Konsultasi vs Dashboard Ringkasan & Statistik) -->
+      <div class="workspace-view-switcher" style="display: flex; background: var(--bg-surface-alt); padding: 3px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-subtle); gap: 3px;">
+        <button class="view-switch-btn active" id="btn-view-consultation" style="padding: 6px 14px; border: none; border-radius: 4px; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; background: var(--bg-surface); color: var(--color-teal); box-shadow: 0 1px 4px rgba(0,0,0,0.18); transition: all 0.2s;" title="Ruang Konsultasi Aktif Pasien">
+          <span>🩺</span> Ruang Konsultasi DPJP
+        </button>
+        <button class="view-switch-btn" id="btn-view-statistics" style="padding: 6px 14px; border: none; border-radius: 4px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; background: transparent; color: var(--text-muted); transition: all 0.2s;" title="Buka Dashboard Ringkasan & Statistik Pasien">
+          <span>📊</span> Ringkasan &amp; Statistik Pasien
+          <span class="badge" id="topbar-stats-badge" style="background: rgba(13, 148, 136, 0.2); color: var(--color-teal); font-size: 0.68rem; padding: 1px 7px; border-radius: 4px;">13 Pasien</span>
+        </button>
+      </div>
+
+      <!-- Quick Pop-up Modal Option -->
+      <button class="btn btn-secondary" id="btn-open-doctor-summary" style="display: flex; align-items: center; gap: 6px; font-size: 0.76rem; padding: 6px 10px; border-color: rgba(13, 148, 136, 0.4); color: var(--color-teal); font-weight: 700; border-radius: var(--radius-sm);" title="Buka Pop-up Ringkasan Cepat">
+        <span>🔍 Pop-up</span>
+      </button>
+
       <div class="doctor-profile-badge">
         <div class="doctor-avatar-circle">H</div>
         <div>
@@ -296,90 +416,53 @@
   </header>
 
   <!-- 3-Column Workspace -->
-  <main class="workspace-main-container">
+  <main class="workspace-main-container" id="view-consultation-workspace">
 
     <!-- ==========================================================================
          COLUMN 1: Antrean Pasien Hari Ini
          ========================================================================== -->
     <aside class="col-queue">
-      <div class="queue-header">
-        <div>
-          <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary);">Antrean Pasien Tatap Muka</h3>
-          <p style="font-size: 0.74rem; color: var(--text-muted);">Selasa, 22 September 2026</p>
+      <div class="queue-header" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <h3 style="font-size: 0.92rem; font-weight: 800; color: var(--text-primary); margin: 0;">Antrean Pasien DPJP</h3>
+            <p style="font-size: 0.72rem; color: var(--text-muted); margin: 2px 0 0 0;" id="doctor-queue-date-label">Rabu, 23 September 2026</p>
+          </div>
+          <span class="badge" id="doctor-queue-count-badge" style="background: rgba(2, 132, 199, 0.15); color: #0284C7; font-size: 0.72rem; font-weight: 700;">
+            Memuat...
+          </span>
         </div>
-        <span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284C7; font-size: 0.72rem;">
-          4 Pasien
-        </span>
+
+        <!-- Quick Summary Bar with Action Button -->
+        <div id="queue-quick-summary-bar" style="background: rgba(13, 148, 136, 0.08); border: 1px solid rgba(13, 148, 136, 0.28); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem;">
+          <span style="color: var(--text-secondary);" id="queue-summary-text">📊 <strong>13 Pasien</strong> &bull; 3 Selesai &bull; 6 Antre</span>
+          <button id="btn-quick-open-stats" style="background: none; border: none; color: var(--color-teal); font-weight: 800; cursor: pointer; font-size: 0.72rem; display: flex; align-items: center; gap: 2px;" title="Buka Dashboard Ringkasan & Statistik Klinis Pasien">
+            Statistik ➔
+          </button>
+        </div>
+        
+        <!-- Filter Tabs -->
+        <div style="display: flex; gap: 4px; background: var(--bg-surface-alt); padding: 3px; border-radius: 6px; font-size: 0.72rem;" id="queue-filter-tabs">
+          <button class="queue-filter-btn active" data-filter="all" style="flex: 1; padding: 4px 6px; border: none; background: var(--bg-surface); color: var(--color-teal); font-weight: 800; border-radius: 4px; cursor: pointer;">Semua</button>
+          <button class="queue-filter-btn" data-filter="unexamined" style="flex: 1; padding: 4px 6px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; border-radius: 4px; cursor: pointer;">Belum</button>
+          <button class="queue-filter-btn" data-filter="examined" style="flex: 1; padding: 4px 6px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; border-radius: 4px; cursor: pointer;">Selesai</button>
+          <button class="queue-filter-btn" data-filter="cancelled" style="flex: 1; padding: 4px 6px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; border-radius: 4px; cursor: pointer;">Batal</button>
+        </div>
       </div>
 
       <div class="queue-list" id="doctor-queue-list">
-        <!-- Patient 1: Rian (Active) -->
-        <div class="patient-queue-card active" id="queue-item-1" data-patient-id="rian" title="Klik untuk membuka asesmen & Voice Note Rian">
-          <div class="card-top-row">
-            <span class="patient-name-title">Rian (27 thn)</span>
-            <span class="patient-slot-time">09:00 - 09:30</span>
-          </div>
-          <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">
-            Rawat Jalan &bull; GAD-7: <strong>16 (Berat)</strong>
-          </div>
-          <div class="badge-overnight-alert">
-            🌙 Voice Note Siap Review (Cemas: 8/10)
-          </div>
-          <div class="queue-patient-status" style="font-size: 0.72rem; color: #10B981; font-weight: 700; margin-top: 6px;">
-            ● Pasien di Ruang Praktek
-          </div>
-        </div>
-
-        <!-- Patient 2 -->
-        <div class="patient-queue-card" id="queue-item-2" data-patient-id="dewi" title="Klik untuk membuka asesmen kontrol rutin Dewi Sartika">
-          <div class="card-top-row">
-            <span class="patient-name-title">Dewi Sartika (34 thn)</span>
-            <span class="patient-slot-time">09:45 - 10:15</span>
-          </div>
-          <div style="font-size: 0.78rem; color: var(--text-secondary);">
-            Kontrol Rutin Bipolar &bull; PHQ-9: 8 (Ringan)
-          </div>
-          <div class="queue-patient-status" style="font-size: 0.72rem; color: #F59E0B; margin-top: 6px;">
-            ⏳ Menunggu di Loket
-          </div>
-        </div>
-
-        <!-- Patient 3 -->
-        <div class="patient-queue-card" id="queue-item-3" data-patient-id="ahmad" title="Klik untuk membuka formulir intake Ahmad Fauzi">
-          <div class="card-top-row">
-            <span class="patient-name-title">Ahmad Fauzi (41 thn)</span>
-            <span class="patient-slot-time">10:30 - 11:00</span>
-          </div>
-          <div style="font-size: 0.78rem; color: var(--text-secondary);">
-            Pasien Baru &bull; Intake PWA Selesai
-          </div>
-          <div class="queue-patient-status" style="font-size: 0.72rem; color: #64748B; margin-top: 6px;">
-            🕒 Terjadwal
-          </div>
-        </div>
-
-        <!-- Patient 4 -->
-        <div class="patient-queue-card" id="queue-item-4" data-patient-id="siti" title="Klik untuk membuka asesmen krisis & Voice Note Siti Nurhaliza">
-          <div class="card-top-row">
-            <span class="patient-name-title">Siti Nurhaliza (22 thn)</span>
-            <span class="patient-slot-time">11:15 - 11:45</span>
-          </div>
-          <div style="font-size: 0.78rem; color: var(--text-secondary);">
-            Evaluasi Insomnia &bull; Curhat WA Terenkripsi
-          </div>
-          <div class="badge-overnight-alert">
-            🌙 Voice Note Siap Review (Cemas: 6/10)
-          </div>
-          <div class="queue-patient-status" style="font-size: 0.72rem; color: #64748B; margin-top: 6px;">
-            🕒 Terjadwal (11:15)
-          </div>
+        <!-- Rendered dynamically by loadDoctorQueue() -->
+        <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.8rem;">
+          ⏳ Memuat antrean pasien terkini...
         </div>
       </div>
 
-      <div style="padding: 12px; border-top: 1px solid var(--border-subtle); background: var(--bg-surface-alt); font-size: 0.75rem; color: var(--text-muted);">
-        🔒 <strong>Jaminan Privasi:</strong> Wawancara tatap muka berlangsung bebas dari rekaman audio ruangan.
+      <div style="padding: 10px 14px; border-top: 1px solid var(--border-subtle); background: var(--bg-surface-alt); font-size: 0.74rem; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;">
+        <span>🔒 <strong>Privasi Bebas Rekaman</strong></span>
+        <button id="btn-refresh-doctor-queue" style="background: none; border: none; color: var(--color-teal); font-size: 0.72rem; font-weight: 700; cursor: pointer;">🔄 Sinkronkan</button>
       </div>
     </aside>
+
 
     <!-- ==========================================================================
          COLUMN 2: Analisis Voice Note Semalam & Panduan Wawancara Mendalam
@@ -549,6 +632,539 @@
     </aside>
 
   </main>
+
+  <!-- ==========================================================================
+       DEDICATED FULL VIEW: DASHBOARD RINGKASAN & STATISTIK KLINIS PASIEN DPJP
+       ========================================================================== -->
+  <section id="view-doctor-statistics" style="display: none; height: calc(100vh - 61px); overflow-y: auto; padding: 24px 32px; background: var(--bg-app); animation: fadeIn 0.25s ease;">
+    <div style="max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+      
+      <!-- Top Banner Header -->
+      <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border-left: 5px solid var(--color-teal); box-shadow: var(--shadow-sm);">
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">📊</span>
+            <div>
+              <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+                Dashboard Ringkasan &amp; Statistik Pasien DPJP
+              </h2>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0;">
+                dr. Hendra, Sp.KJ &bull; Rekapitulasi Kriteria Diagnosa Psikiatri, Derajat Tilikan (Insight), &amp; Demografi Pasien
+              </p>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="btn btn-secondary" id="btn-refresh-stats-page" style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; padding: 8px 14px; font-weight: 700; color: var(--color-teal); border-color: var(--color-teal); cursor: pointer;">
+            🔄 Refresh Data Real-Time
+          </button>
+          <button class="btn btn-primary" id="btn-back-to-consultation" style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; padding: 8px 16px; font-weight: 800; background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%); border: none; cursor: pointer;">
+            <span>🩺</span> Kembali ke Ruang Konsultasi
+          </button>
+        </div>
+      </div>
+
+      <!-- Periode & Statistik Filter Bar (Multi-Period Summarizer) -->
+      <div class="stats-filter-bar" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 18px 22px; box-shadow: var(--shadow-xs); display: flex; flex-direction: column; gap: 14px;">
+        
+        <!-- Row 1: Label & Quick Preset Buttons -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.1rem;">🗓️</span>
+            <span style="font-weight: 800; font-size: 0.9rem; color: var(--text-primary);">Filter Ringkasan Periode:</span>
+            <span class="badge" id="stat-filter-active-badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal); font-weight: 800; font-size: 0.76rem; padding: 4px 10px; border-radius: 999px;">
+              Hari Ini (Today)
+            </span>
+          </div>
+
+          <!-- Quick Presets -->
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;" id="stat-quick-presets-group">
+            <button type="button" class="btn-period-preset active" data-period="today">
+              Hari Ini (Today)
+            </button>
+            <button type="button" class="btn-period-preset" data-period="yesterday">
+              Kemarin (Yesterday)
+            </button>
+            <button type="button" class="btn-period-preset" data-period="week">
+              1 Minggu (A Week)
+            </button>
+            <button type="button" class="btn-period-preset" data-period="month">
+              1 Bulan (A Month)
+            </button>
+            <button type="button" class="btn-period-preset" data-period="year">
+              1 Tahun (A Year)
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 2: Granular Filters (On Which Day, On Which Month, On Which Year) -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding-top: 12px; border-top: 1px dashed var(--border-subtle);">
+          <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            
+            <!-- On Which Day -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label for="filter-stat-input-day" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap; display: flex; align-items: center; gap: 4px;">
+                <span>📅</span> On Which Day:
+              </label>
+              <input type="date" id="filter-stat-input-day" value="2026-09-23" class="stat-input-control">
+              <button type="button" id="btn-apply-stat-day" class="btn btn-secondary" style="font-size: 0.72rem; padding: 5px 9px; font-weight: 700; border-radius: var(--radius-sm); color: var(--color-teal); border-color: var(--color-teal);">
+                Pilih Hari
+              </button>
+            </div>
+
+            <div style="width: 1px; height: 22px; background: var(--border-subtle);"></div>
+
+            <!-- On Which Month -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label for="filter-stat-input-month" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap; display: flex; align-items: center; gap: 4px;">
+                <span>🗓️</span> On Which Month:
+              </label>
+              <input type="month" id="filter-stat-input-month" value="2026-09" class="stat-input-control">
+              <button type="button" id="btn-apply-stat-month" class="btn btn-secondary" style="font-size: 0.72rem; padding: 5px 9px; font-weight: 700; border-radius: var(--radius-sm); color: var(--color-teal); border-color: var(--color-teal);">
+                Pilih Bulan
+              </button>
+            </div>
+
+            <div style="width: 1px; height: 22px; background: var(--border-subtle);"></div>
+
+            <!-- On Which Year -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label for="filter-stat-select-year" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap; display: flex; align-items: center; gap: 4px;">
+                <span>📆</span> On Which Year:
+              </label>
+              <select id="filter-stat-select-year" class="stat-input-control">
+                <option value="2026" selected>2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+              </select>
+              <button type="button" id="btn-apply-stat-year" class="btn btn-secondary" style="font-size: 0.72rem; padding: 5px 9px; font-weight: 700; border-radius: var(--radius-sm); color: var(--color-teal); border-color: var(--color-teal);">
+                Pilih Tahun
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Reset / Live indicator -->
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" id="btn-reset-stat-filter" style="font-size: 0.76rem; font-weight: 700; color: var(--color-teal); background: rgba(13, 148, 136, 0.08); border: 1px solid rgba(13, 148, 136, 0.3); border-radius: var(--radius-sm); padding: 5px 12px; cursor: pointer;">
+              ↺ Reset ke Hari Ini
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 3: Active Status Banner Info -->
+        <div id="stat-active-info-banner" style="background: rgba(13, 148, 136, 0.07); border: 1px solid rgba(13, 148, 136, 0.25); border-radius: var(--radius-sm); padding: 8px 14px; font-size: 0.78rem; color: var(--text-primary); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--color-teal); font-weight: 800;">📍 Rekapitulasi Aktif:</span>
+            <span id="stat-active-period-text" style="font-weight: 700;">Hari Ini (Rabu, 23 Sep 2026)</span>
+          </div>
+          <div style="font-size: 0.74rem; color: var(--text-muted);" id="stat-active-period-meta">
+            ⚡ Sinkronisasi Real-Time dengan Database Klinis SQLite
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 4 KPI Overview Cards -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;" id="stats-page-kpi-container">
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px 20px; border-left: 4px solid var(--color-teal); box-shadow: var(--shadow-xs);">
+          <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Pasien Konsul</div>
+          <div style="font-size: 1.9rem; font-weight: 800; color: var(--text-primary); margin-top: 6px;" id="stat-page-total-patients">13</div>
+          <div style="font-size: 0.74rem; color: var(--color-teal); font-weight: 600; margin-top: 4px;">● Terdaftar di Jadwal Hari Ini</div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px 20px; border-left: 4px solid #10B981; box-shadow: var(--shadow-xs);">
+          <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Sudah Diperiksa</div>
+          <div style="font-size: 1.9rem; font-weight: 800; color: #10B981; margin-top: 6px;" id="stat-page-completed-patients">3</div>
+          <div style="font-size: 0.74rem; color: #10B981; font-weight: 600; margin-top: 4px;">✓ Disahkan ke SATUSEHAT Kemenkes</div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px 20px; border-left: 4px solid #F59E0B; box-shadow: var(--shadow-xs);">
+          <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Menunggu / Antre</div>
+          <div style="font-size: 1.9rem; font-weight: 800; color: #F59E0B; margin-top: 6px;" id="stat-page-waiting-patients">6</div>
+          <div style="font-size: 0.74rem; color: #F59E0B; font-weight: 600; margin-top: 4px;">⏳ Siap di Ruang Praktek Poli</div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px 20px; border-left: 4px solid #EF4444; box-shadow: var(--shadow-xs);">
+          <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Batal Hadir</div>
+          <div style="font-size: 1.9rem; font-weight: 800; color: #EF4444; margin-top: 6px;" id="stat-page-cancelled-patients">4</div>
+          <div style="font-size: 0.74rem; color: #EF4444; font-weight: 600; margin-top: 4px;">❌ Slot Dibuka Kembali di Admin</div>
+        </div>
+      </div>
+
+      <!-- Main Analytics Grid -->
+      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px;">
+        
+        <!-- Left Column: Kriteria Konsultasi -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Card Kriteria Klinis -->
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-xs);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div>
+                <h4 style="margin: 0; font-size: 0.96rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                  <span>🩺</span> Distribusi Kriteria Konsultasi &amp; Klaster Gangguan Jiwa
+                </h4>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 0 0;">
+                  Berdasarkan Triase AI, Anamnesis Suara, &amp; Penapisan Klinis Psikiatri
+                </p>
+              </div>
+              <span class="badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal); font-size: 0.74rem; font-weight: 700;">
+                Real-Time DB
+              </span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 16px;" id="criteria-bars-page-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Card Derajat Tilikan Pasien -->
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-xs);">
+            <h4 style="margin: 0 0 8px 0; font-size: 0.96rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>🧠</span> Derajat Tilikan Pasien (Psychiatric Insight)
+            </h4>
+            <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 14px;">
+              Tingkat kesadaran pasien terhadap gangguan mental yang dialami dan kepatuhan terapi:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;" id="insight-cards-page-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Demografi & Voice Note Triage -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Card Demografi Usia -->
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-xs);">
+            <h4 style="margin: 0 0 8px 0; font-size: 0.96rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>👥</span> Demografi Kelompok Usia Pasien
+            </h4>
+            <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 14px;">
+              Sebaran kelompok umur pasien yang berkonsultasi ke poli psikiatri hari ini:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;" id="demographics-cards-page-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Card Night Triage & Voice Note Compliance -->
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-xs);">
+            <h4 style="margin: 0 0 8px 0; font-size: 0.96rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>🌙</span> Ringkasan Triage Krisis Malam &amp; Voice Note
+            </h4>
+            <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 14px;">
+              Pemantauan kepatuhan privasi rekaman suara dan eskalasi krisis malam:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Pasien Mengirim Voice Note Krisis</div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);">Rian (01:32 WIB) &bull; Siti Nurhaliza (02:15 WIB)</div>
+                </div>
+                <span class="badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal); font-weight: 800; font-size: 0.84rem;">
+                  2 Pasien (100% Terdekripsi)
+                </span>
+              </div>
+
+              <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Rata-rata Skor Kecemasan Krisis</div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);">Triage AI malam hari (Skala 1 - 10)</div>
+                </div>
+                <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #F59E0B; font-weight: 800; font-size: 0.84rem;">
+                  7.0 / 10 (Moderate to High)
+                </span>
+              </div>
+
+              <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Kepatuhan WhatsApp Purge (UU PDP)</div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);">Hapus otomatis dari server WA dalam &lt; 24 jam</div>
+                </div>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 800; font-size: 0.84rem;">
+                  ✓ 100% Terverifikasi
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom: Pasien DPJP Table Breakdown -->
+      <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-xs);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h4 style="margin: 0; font-size: 0.96rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>📋</span> <span id="stat-table-period-header">Daftar Pasien &amp; Status Operasional (Hari Ini)</span>
+            </h4>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 0 0;" id="stat-table-period-sub">
+              Daftar rekam konsultasi pasien pada periode terpilih. Klik "Buka Konsultasi" untuk memeriksa atau melihat riwayat klinis.
+            </p>
+          </div>
+          <span class="badge" id="stat-table-count-badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal); font-weight: 800; font-size: 0.76rem;">
+            13 Pasien Terdata
+          </span>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+            <thead>
+              <tr style="background: var(--bg-surface-alt); border-bottom: 2px solid var(--border-subtle); color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                <th style="padding: 10px 14px;">No Antrean</th>
+                <th style="padding: 10px 14px;">Nama Pasien &amp; Usia</th>
+                <th style="padding: 10px 14px;">Tanggal &amp; Jam Slot</th>
+                <th style="padding: 10px 14px;">Voice Note Krisis</th>
+                <th style="padding: 10px 14px;">Kriteria / Indikasi</th>
+                <th style="padding: 10px 14px;">Status Konsultasi</th>
+                <th style="padding: 10px 14px; text-align: center;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="page-stats-patients-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Modal Perbandingan Enkripsi Database vs Tampilan Dokter -->
+  <div class="modal-overlay" id="doctor-crypto-comparison-modal" role="dialog" aria-modal="true">
+    <div class="auth-modal-dialog" style="border: 2px solid var(--color-teal); max-width: 720px; width: 92%;">
+      <div class="modal-header-banner" style="background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%); color: white;">
+        <div class="modal-header-title">
+          <h3 style="display: flex; align-items: center; gap: 8px;">
+            🔒 Pembuktian Enkripsi Zero-Knowledge (UU PDP No. 27/2022)
+          </h3>
+          <p>Perbandingan Data Mentah di Database/Drizzle Studio vs Layar Dokter DPJP</p>
+        </div>
+        <button class="modal-close-btn" id="btn-close-crypto-modal">&times;</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto;">
+        <div style="background: rgba(13, 148, 136, 0.08); border-left: 4px solid var(--color-teal); padding: 12px 14px; border-radius: var(--radius-md); font-size: 0.84rem; line-height: 1.5;">
+          <strong>Standar Privasi Medis:</strong> Seluruh tabel klinis (<code>clinical_overnight_logs</code>, <code>clinical_interview_probes</code>, dan <code>clinical_medical_records</code>) disimpan dalam bentuk <strong>AES-256-GCM Ciphertext</strong>. Administrator platform maupun siapapun yang membuka Drizzle Studio <strong>TIDAK DAPAT MEMBACA</strong> isi keluhan krisis maupun catatan evaluasi status mental (MSE) pasien.
+        </div>
+
+        <!-- Comparison Table / Cards -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <!-- Item 1: Raw Overnight Transcript -->
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="font-size: 0.8rem; font-weight: 800; color: var(--color-teal); margin-bottom: 8px;">
+              1. Tabel: <code>clinical_overnight_logs.raw_transcript</code> (Pesan Suara Pasien)
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.78rem;">
+              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">
+                <div style="color: #EF4444; font-weight: 700; margin-bottom: 4px;">🔴 Tampilan Drizzle Studio / Admin:</div>
+                <code style="word-break: break-all; color: #FCA5A5; font-size: 0.72rem; line-height: 1.4;">
+                  ENC_AES256_GCM:c5c2f2e6d41583b010e9c8f2:91a4b8... (Tidak dapat dibaca)
+                </code>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                <div style="color: #10B981; font-weight: 700; margin-bottom: 4px;">🟢 Tampilan Dokter Terdekripsi:</div>
+                <div style="color: var(--text-primary); font-style: italic; line-height: 1.4;">
+                  "Dada saya berdebar kencang sekali Dok... rasanya seperti mau mati sesak napas..."
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 2: Recommended Question Probe -->
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="font-size: 0.8rem; font-weight: 800; color: var(--color-teal); margin-bottom: 8px;">
+              2. Tabel: <code>clinical_interview_probes.recommended_question</code> (Pertanyaan Wawancara Sp.KJ)
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.78rem;">
+              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">
+                <div style="color: #EF4444; font-weight: 700; margin-bottom: 4px;">🔴 Tampilan Drizzle Studio / Admin:</div>
+                <code style="word-break: break-all; color: #FCA5A5; font-size: 0.72rem; line-height: 1.4;">
+                  ENC_AES256_GCM:25d5db462ebc2c633d51aa74:e30c94... (Ciphertext)
+                </code>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                <div style="color: #10B981; font-weight: 700; margin-bottom: 4px;">🟢 Tampilan Dokter Terdekripsi:</div>
+                <div style="color: var(--text-primary); font-style: italic; line-height: 1.4;">
+                  "Mas Rian, di rekaman suara semalam Anda mengeluhkan dada berdebar kencang dan tangan gemetar..."
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 3: Medical Record MSE Data -->
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="font-size: 0.8rem; font-weight: 800; color: var(--color-teal); margin-bottom: 8px;">
+              3. Tabel: <code>clinical_medical_records.mse_data</code> (Status Mental Pasien)
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.78rem;">
+              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">
+                <div style="color: #EF4444; font-weight: 700; margin-bottom: 4px;">🔴 Tampilan Drizzle Studio / Admin:</div>
+                <code style="word-break: break-all; color: #FCA5A5; font-size: 0.72rem; line-height: 1.4;">
+                  ENC_AES256_GCM:f8233e1354708ff460741289:80c71a... (Ciphertext)
+                </code>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                <div style="color: #10B981; font-weight: 700; margin-bottom: 4px;">🟢 Tampilan Dokter Terdekripsi:</div>
+                <div style="color: var(--text-primary); font-style: italic; line-height: 1.4;">
+                  {"moodAffect":"Mood cemas, afek serasi","thoughtFormContent":"Bentuk pikir koheren..."}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-close-crypto-dialog" style="width: 100%; padding: 10px; font-weight: 700; background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%);">
+          Tutup & Kembali ke Konsultasi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Dashboard Ringkasan & Statistik Klinis Pasien (dr. Hendra, Sp.KJ) -->
+  <div class="modal-overlay" id="doctor-summary-modal" role="dialog" aria-modal="true">
+    <div class="auth-modal-dialog" style="border: 2px solid var(--color-teal); max-width: 860px; width: 94%; border-radius: var(--radius-lg); overflow: hidden;">
+      <div class="modal-header-banner" style="background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%); color: white; padding: 16px 20px;">
+        <div class="modal-header-title">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.25rem;">📊</span>
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800;">
+              Dashboard Ringkasan &amp; Statistik Pasien DPJP
+            </h3>
+          </div>
+          <p style="margin: 4px 0 0 0; font-size: 0.78rem; opacity: 0.9;">
+            dr. Hendra, Sp.KJ &bull; Rekapitulasi Kriteria Diagnosa, Tilikan (Insight), &amp; Demografi Pasien
+          </p>
+        </div>
+        <button class="modal-close-btn" id="btn-close-summary-modal" style="font-size: 1.5rem; color: #fff; background: none; border: none; cursor: pointer;">&times;</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; max-height: 75vh; overflow-y: auto; padding: 20px;">
+        
+        <!-- Modal Multi-Period Filter Bar -->
+        <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 1rem;">🗓️</span>
+              <strong style="font-size: 0.82rem; color: var(--text-primary);">Filter Ringkasan:</strong>
+              <span class="badge" id="stat-modal-filter-badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal); font-weight: 800; font-size: 0.72rem; padding: 3px 8px; border-radius: 999px;">
+                Hari Ini (Today)
+              </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;" id="modal-quick-presets-group">
+              <button type="button" class="btn-period-preset active" data-period="today" style="padding: 4px 9px; font-size: 0.72rem;">Hari Ini</button>
+              <button type="button" class="btn-period-preset" data-period="yesterday" style="padding: 4px 9px; font-size: 0.72rem;">Kemarin</button>
+              <button type="button" class="btn-period-preset" data-period="week" style="padding: 4px 9px; font-size: 0.72rem;">1 Minggu</button>
+              <button type="button" class="btn-period-preset" data-period="month" style="padding: 4px 9px; font-size: 0.72rem;">1 Bulan</button>
+              <button type="button" class="btn-period-preset" data-period="year" style="padding: 4px 9px; font-size: 0.72rem;">1 Tahun</button>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 0.75rem; border-top: 1px dashed var(--border-subtle); padding-top: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="color: var(--text-muted); font-weight: 700;">📅 Hari:</span>
+                <input type="date" id="modal-filter-stat-day" value="2026-09-23" class="stat-input-control" style="font-size: 0.72rem; padding: 3px 6px;">
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="color: var(--text-muted); font-weight: 700;">🗓️ Bulan:</span>
+                <input type="month" id="modal-filter-stat-month" value="2026-09" class="stat-input-control" style="font-size: 0.72rem; padding: 3px 6px;">
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="color: var(--text-muted); font-weight: 700;">📆 Tahun:</span>
+                <select id="modal-filter-stat-year" class="stat-input-control" style="font-size: 0.72rem; padding: 3px 6px;">
+                  <option value="2026" selected>2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                </select>
+              </div>
+            </div>
+            <button type="button" id="modal-btn-reset-stat-filter" style="font-size: 0.72rem; font-weight: 700; color: var(--color-teal); background: none; border: none; cursor: pointer; text-decoration: underline;">
+              ↺ Reset ke Hari Ini
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Overview Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;" id="stats-kpi-container">
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; border-left: 4px solid var(--color-teal);">
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Pasien Konsul</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin-top: 4px;" id="stat-modal-total-patients">13</div>
+            <div style="font-size: 0.7rem; color: var(--color-teal); font-weight: 600; margin-top: 2px;">● Terdaftar di Jadwal</div>
+          </div>
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; border-left: 4px solid #10B981;">
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Sudah Diperiksa</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #10B981; margin-top: 4px;" id="stat-modal-completed-patients">2</div>
+            <div style="font-size: 0.7rem; color: #10B981; font-weight: 600; margin-top: 2px;">✓ Disahkan ke SATUSEHAT</div>
+          </div>
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; border-left: 4px solid #F59E0B;">
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Menunggu / Antre</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #F59E0B; margin-top: 4px;" id="stat-modal-waiting-patients">7</div>
+            <div style="font-size: 0.7rem; color: #F59E0B; font-weight: 600; margin-top: 2px;">⏳ Siap di Ruang Praktek</div>
+          </div>
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; border-left: 4px solid #EF4444;">
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Batal Hadir</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #EF4444; margin-top: 4px;" id="stat-modal-cancelled-patients">4</div>
+            <div style="font-size: 0.7rem; color: #EF4444; font-weight: 600; margin-top: 2px;">❌ Slot Dibuka Kembali</div>
+          </div>
+        </div>
+
+        <!-- Section 1: Klaster Kriteria Konsultasi & Diagnosa Klinis -->
+        <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="margin: 0; font-size: 0.88rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>🩺</span> Distribusi Kriteria Konsultasi &amp; Klaster Gangguan Jiwa
+            </h4>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Berdasarkan Asesmen Psikiatri &amp; Triage AI</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;" id="criteria-bars-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Section 2: Grid: Tilikan (Insight) & Demografi Usia -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <!-- Card Tilikan (Insight Level) -->
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px;">
+            <h4 style="margin: 0 0 10px 0; font-size: 0.86rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>🧠</span> Derajat Tilikan Pasien (Psychiatric Insight)
+            </h4>
+            <p style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 12px;">
+              Evaluasi kesadaran pasien terhadap gangguan mental yang dialami:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;" id="insight-cards-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Card Demografi Usia -->
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px;">
+            <h4 style="margin: 0 0 10px 0; font-size: 0.86rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>👥</span> Demografi Kelompok Usia Pasien
+            </h4>
+            <p style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 12px;">
+              Sebaran kelompok umur pasien yang berkonsultasi ke poli:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;" id="demographics-cards-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 14px; margin-top: 4px;">
+          <button class="btn btn-secondary" id="btn-refresh-stats-data" style="font-size: 0.78rem; padding: 7px 12px; font-weight: 700; color: var(--color-teal); border-color: var(--color-teal); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            🔄 Refresh Data Real-Time
+          </button>
+          <button class="btn btn-primary" id="btn-close-summary-dialog" style="font-size: 0.82rem; padding: 8px 18px; font-weight: 700; background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%);">
+            Tutup Dashboard Analisis
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="js/app.js"></script>
@@ -1129,6 +1745,276 @@
     if (soapBtn) soapBtn.addEventListener('click', () => switchEditorTab(soapBtn, soapBody));
     if (historyBtn) historyBtn.addEventListener('click', () => switchEditorTab(historyBtn, historyBody));
 
+    // ==========================================================================
+    // DYNAMIC PATIENT QUEUE & SYNCHRONIZATION WITH BACKEND / OPERATIONAL STATUS
+    // ==========================================================================
+    let doctorQueueData = [];
+    let currentQueueFilter = 'all';
+
+    // Helper: Map or create clinical profile in patientsData for any patient in queue
+    function ensurePatientData(item) {
+      if (!item) return 'rian';
+      const pName = (item.patientName || '').toLowerCase();
+      let key = 'rian';
+
+      if (pName.includes('rian')) key = 'rian';
+      else if (pName.includes('dewi')) key = 'dewi';
+      else if (pName.includes('ahmad') || pName.includes('fauzi')) key = 'ahmad';
+      else if (pName.includes('siti')) key = 'siti';
+      else key = `pat_${item.id || item.patientId || Math.random().toString(36).slice(2, 6)}`;
+
+      if (!patientsData[key]) {
+        // Synthesize clinical data for newly added/registered patient
+        const age = item.patientAge || 30;
+        const name = item.patientName || 'Pasien Rawat Jalan';
+        const hasVn = Boolean(item.hasOvernightLog);
+
+        patientsData[key] = {
+          id: key,
+          appointmentId: item.id,
+          name: `${name} (${age} thn)`,
+          slot: `${item.timeSlot} WIB`,
+          channelBadge: hasVn ? '🌙 WA Triage Krisis' : 'Loket Rawat Jalan',
+          triageStatus: hasVn ? `✓ VN Teranalisis (Cemas: ${item.anxietyScore || 7}/10)` : 'Intake Loket Selesai',
+          hasVn: hasVn,
+          vnTitle: hasVn ? `Voice Note Krisis Pasien (${item.timeSlot})` : 'Pendaftaran Pasien Baru',
+          vnMeta: hasVn ? `Durasi: 00:38 • Skor Cemas: ${item.anxietyScore || 7}/10` : 'Skrining Awal Loket',
+          vnAudioDuration: '00:38',
+          isSigned: Boolean(item.isExamined),
+          signedEncounterId: item.satusehatEncounterId || null,
+          probesSource: hasVn ? 'Disusun Otomatis dari Voice Note Pasien' : 'Panduan Anamnesis Rutin Sp.KJ',
+          probes: [
+            {
+              color: 'var(--color-teal)',
+              badge: '1. Keluhan Utama & Onset Gejala',
+              time: '[00:10]',
+              timeAlert: 'Dengar bukti audio atau konfirmasi onset gejala pasien',
+              question: `Selamat pagi ${name.split(' ')[0]}, apa keluhan utama yang paling mengganggu aktivitas sehari-hari belakangan ini? Sejak kapan keluhan ini dirasakan memberat?`,
+              rationale: 'Eksplorasi keluhan utama, kronologi onset, dan pemicu psikososial yang memperburuk kondisi.'
+            },
+            {
+              color: 'var(--color-primary)',
+              badge: '2. Eksplorasi Gejala Somatik & Otonom',
+              time: '[00:25]',
+              timeAlert: 'Evaluasi respon fisik otonom (palpitasi/tremor/dispepsia)',
+              question: `Apakah saat stres atau cemas memuncak timbul keluhan fisik seperti dada berdebar, napas pendek, atau lambung perih?`,
+              rationale: 'Menilai derajat keterlibatan respons psikosomatik pada keluhan emosional pasien.'
+            },
+            {
+              color: '#10B981',
+              badge: '3. Penapisan Ide Bunuh Diri & Harapan Hidup',
+              time: '[00:40]',
+              timeAlert: 'Prosedur keselamatan klinis penapisan risiko suisidal',
+              question: `Ketika merasa lelah atau tertekan, apakah pernah terbersit pikiran bahwa hidup ini tidak ada artinya atau ada keinginan untuk mengakhiri hidup?`,
+              rationale: 'Penapisan keselamatan klinis wajib bagi setiap pasien psikiatri.'
+            }
+          ],
+          mse: {
+            mood: 'Mood disforik/cemas ringan, afek serasi. Sikap kooperatif.',
+            thought: 'Bentuk pikir koheren dan realistis. Tidak ditemukan waham curiga atau bizar.',
+            perception: 'Halusinasi auditorik dan visual negatif (-).',
+            insight: 'Tilikan Derajat 4 (Sadar diri membutuhkan pertolongan dan bersedia diobati).'
+          },
+          soap: {
+            s: `Pasien datang untuk evaluasi keluhan psikiatri pada slot ${item.timeSlot}.`,
+            o: `TD: 120/80 mmHg, Nadi: 80x/m. Kontak mata baik, psikomotor tenang.`,
+            a: `F41.1 Gangguan Cemas Menyeluruh (GAD) / Evaluasi Rawat Jalan`,
+            p: `1. Psikoterapi suportif dan konseling sleep hygiene\n2. Farmakoterapi sesuai indikasi DPJP\n3. Kontrol ulang 14 hari`
+          },
+          history: []
+        };
+      } else {
+        patientsData[key].appointmentId = item.id;
+        if (item.isExamined) {
+          patientsData[key].isSigned = true;
+          patientsData[key].signedEncounterId = item.satusehatEncounterId || patientsData[key].signedEncounterId;
+        }
+      }
+
+      item.patientKey = key;
+      return key;
+    }
+
+    // Load Doctor Queue from API
+    async function loadDoctorQueue() {
+      const queueListContainer = document.getElementById('doctor-queue-list');
+      const countBadge = document.getElementById('doctor-queue-count-badge');
+      const topbarBadge = document.getElementById('topbar-stats-badge');
+
+      try {
+        const data = await DocApiClient.get('/doctor/queue');
+        if (data && data.queue && data.queue.length > 0) {
+          doctorQueueData = data.queue;
+        } else {
+          // Fallback initial demo array if backend is fresh or empty
+          doctorQueueData = [
+            { id: 'apt-rian-01', patientId: 'rian', patientName: 'Rian', patientAge: 27, timeSlot: '09:00 - 09:30', operationalStatus: 'completed', isExamined: true, isCancelled: false, hasOvernightLog: true, anxietyScore: 8, registrationSource: 'whatsapp_triage', satusehatEncounterId: 'FHIR-ENC-90815' },
+            { id: 'apt-dewi-02', patientId: 'dewi', patientName: 'Dewi Sartika', patientAge: 34, timeSlot: '09:45 - 10:15', operationalStatus: 'in_session', isExamined: false, isCancelled: false, hasOvernightLog: true, anxietyScore: 7, registrationSource: 'whatsapp_triage' },
+            { id: 'apt-dimas-03', patientId: 'ahmad', patientName: 'Ahmad Fauzi', patientAge: 41, timeSlot: '10:30 - 11:00', operationalStatus: 'waiting', isExamined: false, isCancelled: false, hasOvernightLog: false, registrationSource: 'walk_in' },
+            { id: 'apt-siti-04', patientId: 'siti', patientName: 'Siti Nurhaliza', patientAge: 22, timeSlot: '11:15 - 11:45', operationalStatus: 'waiting', isExamined: false, isCancelled: false, hasOvernightLog: true, anxietyScore: 6, registrationSource: 'whatsapp_triage' }
+          ];
+        }
+
+        // Register all items into patientsData
+        doctorQueueData.forEach(item => ensurePatientData(item));
+
+        const comp = doctorQueueData.filter(q => q.isExamined).length;
+        const wait = doctorQueueData.filter(q => !q.isExamined && !q.isCancelled).length;
+        const canc = doctorQueueData.filter(q => q.isCancelled).length;
+        if (countBadge) countBadge.textContent = `${doctorQueueData.length} Pasien`;
+        if (topbarBadge) topbarBadge.textContent = `${doctorQueueData.length} Pasien`;
+        const queueSummaryText = document.getElementById('queue-summary-text');
+        if (queueSummaryText) {
+          queueSummaryText.innerHTML = `📊 <strong>${doctorQueueData.length} Pasien</strong> &bull; ${comp} Selesai &bull; ${wait} Antre`;
+        }
+
+        renderDoctorQueueList();
+
+        // If no active patient or current active patient not in queue, set first non-cancelled
+        if (!activePatientId || !patientsData[activePatientId]) {
+          const firstValid = doctorQueueData.find(q => !q.isCancelled) || doctorQueueData[0];
+          if (firstValid && firstValid.patientKey) {
+            renderPatient(firstValid.patientKey);
+          }
+        }
+      } catch (err) {
+        console.error('[DoctorQueue] Load error:', err);
+      }
+    }
+
+    // Render Doctor Queue List with Filters and Visual Badges
+    function renderDoctorQueueList() {
+      const container = document.getElementById('doctor-queue-list');
+      if (!container) return;
+
+      let filtered = doctorQueueData;
+      if (currentQueueFilter === 'unexamined') {
+        filtered = doctorQueueData.filter(q => !q.isExamined && !q.isCancelled);
+      } else if (currentQueueFilter === 'examined') {
+        filtered = doctorQueueData.filter(q => q.isExamined);
+      } else if (currentQueueFilter === 'cancelled') {
+        filtered = doctorQueueData.filter(q => q.isCancelled);
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 32px 14px; color: var(--text-muted); font-size: 0.8rem;">
+            Tidak ada pasien dengan kategori filter <strong>"${currentQueueFilter}"</strong>.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(q => {
+        const pKey = q.patientKey || q.patientId || q.id;
+        const isSelected = activePatientId === pKey;
+
+        let borderClass = '';
+        if (q.isExamined) borderClass = ' examined';
+        else if (q.isCancelled) borderClass = ' cancelled';
+
+        // Examined vs Cancelled vs Operational Badges
+        let statusBadgeHtml = '';
+        if (q.isExamined) {
+          statusBadgeHtml = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span class="badge-examined">✓ SUDAH DIPERIKSA</span>
+              <span style="font-family: var(--font-mono); font-size: 0.66rem; color: #10B981; font-weight: 700;">
+                ${q.satusehatEncounterId || 'FHIR-SYNCED'}
+              </span>
+            </div>
+          `;
+        } else if (q.isCancelled) {
+          statusBadgeHtml = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span class="badge-cancelled-status">❌ DIBATALKAN</span>
+              <span style="font-size: 0.68rem; color: #EF4444; font-style: italic;">Batal Hadir</span>
+            </div>
+          `;
+        }
+
+        // Operational Subtitle
+        let opDesc = '';
+        if (q.isCancelled) {
+          opDesc = `<span style="color: #EF4444; font-size: 0.72rem; font-style: italic;">Jadwal dibatalkan &bull; Slot dibuka kembali</span>`;
+        } else if (q.operationalStatus === 'in_session') {
+          opDesc = `<span style="color: #10B981; font-weight: 800; font-size: 0.74rem;">● Pasien di Ruang Praktek</span>`;
+        } else if (q.operationalStatus === 'called') {
+          opDesc = `<span style="color: #B45309; font-weight: 700; font-size: 0.74rem;">📢 Dipanggil ke Poli</span>`;
+        } else if (q.operationalStatus === 'waiting') {
+          opDesc = `<span style="color: #D97706; font-weight: 700; font-size: 0.74rem;">⏳ Menunggu di Poli</span>`;
+        } else if (q.operationalStatus === 'completed') {
+          opDesc = `<span style="color: #047857; font-weight: 700; font-size: 0.74rem;">✓ Selesai Sesi Konsultasi</span>`;
+        } else {
+          opDesc = `<span style="color: var(--text-muted); font-size: 0.74rem;">🕒 Terjadwal (${q.timeSlot})</span>`;
+        }
+
+        // Voice Note indicator
+        let vnBadge = '';
+        if (q.hasOvernightLog) {
+          vnBadge = `
+            <div class="badge-overnight-alert">
+              🌙 Voice Note Siap Review (Cemas: ${q.anxietyScore || 7}/10)
+            </div>
+          `;
+        }
+
+        const nameStyle = q.isCancelled
+          ? 'text-decoration: line-through; color: var(--text-muted);'
+          : (q.isExamined ? 'color: var(--text-primary);' : 'color: var(--text-primary);');
+
+        return `
+          <div class="patient-queue-card${isSelected ? ' active' : ''}${borderClass}"
+               data-patient-id="${pKey}"
+               data-appointment-id="${q.id}"
+               data-examined="${q.isExamined ? 'true' : 'false'}"
+               data-cancelled="${q.isCancelled ? 'true' : 'false'}"
+               title="${q.isCancelled ? 'Pasien ini membatalkan jadwal konsultasi' : (q.isExamined ? 'Rekam medis pasien ini telah disahkan' : 'Klik untuk membuka asesmen pasien')}">
+            <div class="card-top-row">
+              <span class="patient-name-title" style="${nameStyle}">
+                ${q.patientName} (${q.patientAge || 28} thn)
+              </span>
+              <span class="patient-slot-time">${q.timeSlot}</span>
+            </div>
+            ${statusBadgeHtml}
+            <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 3px;">
+              ${q.queueNumber ? `Antrean <strong>${q.queueNumber}</strong> &bull; ` : ''}${q.registrationSource === 'whatsapp_triage' ? '🌙 WA Triage Malam' : 'Rawat Jalan'}
+            </div>
+            ${vnBadge}
+            <div class="queue-patient-status" style="margin-top: 5px;">
+              ${opDesc}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Filter Buttons Listener
+    const filterTabsContainer = document.getElementById('queue-filter-tabs');
+    if (filterTabsContainer) {
+      filterTabsContainer.querySelectorAll('.queue-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterTabsContainer.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentQueueFilter = btn.getAttribute('data-filter') || 'all';
+          renderDoctorQueueList();
+        });
+      });
+    }
+
+    // Refresh Queue Button Listener
+    const btnRefreshQueue = document.getElementById('btn-refresh-doctor-queue');
+    if (btnRefreshQueue) {
+      btnRefreshQueue.addEventListener('click', async () => {
+        btnRefreshQueue.disabled = true;
+        btnRefreshQueue.textContent = '🔄 Menyinkronkan...';
+        await loadDoctorQueue();
+        btnRefreshQueue.disabled = false;
+        btnRefreshQueue.textContent = '🔄 Sinkronkan';
+        if (window.showToast) window.showToast('✅ Antrean dan status operasional dokter berhasil disinkronkan!', 'success');
+      });
+    }
+
     // Column 1 Patient Card Selection Listener
     document.addEventListener('click', (e) => {
       const card = e.target.closest('.patient-queue-card');
@@ -1136,10 +2022,13 @@
         const pId = card.getAttribute('data-patient-id');
         if (pId && patientsData[pId]) {
           renderPatient(pId);
+          renderDoctorQueueList(); // update active highlight
+          const p = patientsData[pId];
           if (window.showToast) {
-            const p = patientsData[pId];
-            if (p.hasVn) {
-              window.showToast(`🎧 Membuka pasien ${p.name}. Voice Note semalam (${p.vnAudioDuration}) & asesmen siap direview!`, 'info');
+            if (p.isSigned) {
+              window.showToast(`✓ Membuka rekam medis ${p.name} (Telah Disahkan DPJP).`, 'success');
+            } else if (p.hasVn) {
+              window.showToast(`🎧 Membuka pasien ${p.name}. Voice Note semalam (${p.vnAudioDuration}) siap direview!`, 'info');
             } else {
               window.showToast(`📋 Membuka profil klinis ${p.name}.`, 'info');
             }
@@ -1167,7 +2056,6 @@
         const currentS = document.getElementById('field-soap-s')?.value || patient.soap.s;
         const currentO = document.getElementById('field-soap-o')?.value || patient.soap.o;
 
-        // Call backend API to persist signed medical record
         let fhirId = `FHIR-ENC-${Math.floor(Math.random() * 89999 + 10000)}`;
         const result = await DocApiClient.post('/doctor/medical-records', {
           appointmentId: patient.appointmentId || activePatientId,
@@ -1185,7 +2073,15 @@
         patient.isSigned = true;
         patient.signedEncounterId = fhirId;
 
-        // Prepend to history
+        // Update item in doctorQueueData
+        const queueItem = doctorQueueData.find(q => q.patientKey === activePatientId || q.id === patient.appointmentId || q.patientId === activePatientId);
+        if (queueItem) {
+          queueItem.isExamined = true;
+          queueItem.operationalStatus = 'completed';
+          queueItem.satusehatEncounterId = fhirId;
+        }
+
+        // Prepend to longitudinal history
         patient.history.unshift({
           date: `${todayFormatted} (Hari Ini)`,
           dpjp: 'dr. Hendra, Sp.KJ',
@@ -1196,15 +2092,8 @@
           status: 'Baru Disahkan'
         });
 
-        // Update Column 1 Queue Status
-        const activeCard = document.querySelector(`.patient-queue-card[data-patient-id="${activePatientId}"]`);
-        if (activeCard) {
-          const statusEl = activeCard.querySelector('.queue-patient-status');
-          if (statusEl) {
-            statusEl.style.color = '#047857';
-            statusEl.innerHTML = '✓ Selesai & Disahkan';
-          }
-        }
+        // Re-render doctor queue cards to show clear green examined state
+        renderDoctorQueueList();
 
         // Update sign button
         signBtn.style.background = '#047857';
@@ -1218,7 +2107,6 @@
         }
       });
     }
-
 
     // Voice Note Audio & Waveform Simulation
     let isVnPlaying = false;
@@ -1258,8 +2146,552 @@
       }
     }
 
-    // Initial load
-    renderPatient('rian');
+    // ==========================================================================
+    // WORKSPACE VIEW SWITCHING (Konsultasi vs Ringkasan & Statistik Klinis)
+    // ==========================================================================
+    let currentWorkspaceView = 'consultation';
+
+    function switchDoctorWorkspaceView(view) {
+      const viewConsultation = document.getElementById('view-consultation-workspace');
+      const viewStats = document.getElementById('view-doctor-statistics');
+      const btnConsultation = document.getElementById('btn-view-consultation');
+      const btnStats = document.getElementById('btn-view-statistics');
+
+      currentWorkspaceView = view;
+
+      if (view === 'statistics') {
+        if (viewConsultation) viewConsultation.style.display = 'none';
+        if (viewStats) viewStats.style.display = 'block';
+
+        if (btnConsultation) {
+          btnConsultation.classList.remove('active');
+          btnConsultation.style.background = 'transparent';
+          btnConsultation.style.color = 'var(--text-muted)';
+          btnConsultation.style.boxShadow = 'none';
+        }
+        if (btnStats) {
+          btnStats.classList.add('active');
+          btnStats.style.background = 'var(--bg-surface)';
+          btnStats.style.color = 'var(--color-teal)';
+          btnStats.style.boxShadow = '0 1px 4px rgba(0,0,0,0.18)';
+        }
+
+        loadDoctorSummaryStats();
+      } else {
+        if (viewConsultation) viewConsultation.style.display = 'grid';
+        if (viewStats) viewStats.style.display = 'none';
+
+        if (btnStats) {
+          btnStats.classList.remove('active');
+          btnStats.style.background = 'transparent';
+          btnStats.style.color = 'var(--text-muted)';
+          btnStats.style.boxShadow = 'none';
+        }
+        if (btnConsultation) {
+          btnConsultation.classList.add('active');
+          btnConsultation.style.background = 'var(--bg-surface)';
+          btnConsultation.style.color = 'var(--color-teal)';
+          btnConsultation.style.boxShadow = '0 1px 4px rgba(0,0,0,0.18)';
+        }
+      }
+    }
+
+    const btnNavConsultation = document.getElementById('btn-view-consultation');
+    const btnNavStatistics = document.getElementById('btn-view-statistics');
+    const btnQuickStats = document.getElementById('btn-quick-open-stats');
+    const btnBackToConsultation = document.getElementById('btn-back-to-consultation');
+
+    if (btnNavConsultation) btnNavConsultation.addEventListener('click', () => switchDoctorWorkspaceView('consultation'));
+    if (btnNavStatistics) btnNavStatistics.addEventListener('click', () => switchDoctorWorkspaceView('statistics'));
+    if (btnQuickStats) btnQuickStats.addEventListener('click', () => switchDoctorWorkspaceView('statistics'));
+    if (btnBackToConsultation) btnBackToConsultation.addEventListener('click', () => switchDoctorWorkspaceView('consultation'));
+
+    // ==========================================================================
+    // DOCTOR SUMMARY & CLINICAL ANALYTICS DASHBOARD (Dedicated View + Modal)
+    // ==========================================================================
+    const summaryModal = document.getElementById('doctor-summary-modal');
+    const btnOpenSummary = document.getElementById('btn-open-doctor-summary');
+    const btnCloseSummary = document.getElementById('btn-close-summary-modal');
+    const btnCloseSummaryDialog = document.getElementById('btn-close-summary-dialog');
+    const btnRefreshStats = document.getElementById('btn-refresh-stats-data');
+    const btnRefreshStatsPage = document.getElementById('btn-refresh-stats-page');
+
+    let currentDoctorStatFilter = { period: 'today' };
+
+    function updateStatFilterControlsUI(filter) {
+      // 1. Update preset buttons active states in both page and modal
+      document.querySelectorAll('#stat-quick-presets-group .btn-period-preset, #modal-quick-presets-group .btn-period-preset').forEach(btn => {
+        const p = btn.getAttribute('data-period');
+        if (p === filter.period) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // 2. Synchronize inputs if specific date/month/year was chosen
+      if (filter.date) {
+        const dInputs = [document.getElementById('filter-stat-input-day'), document.getElementById('modal-filter-stat-day')];
+        dInputs.forEach(el => { if (el) el.value = filter.date; });
+      }
+      if (filter.month) {
+        const mInputs = [document.getElementById('filter-stat-input-month'), document.getElementById('modal-filter-stat-month')];
+        mInputs.forEach(el => { if (el) el.value = filter.month; });
+      }
+      if (filter.year) {
+        const yInputs = [document.getElementById('filter-stat-select-year'), document.getElementById('modal-filter-stat-year')];
+        yInputs.forEach(el => { if (el) el.value = filter.year; });
+      }
+    }
+
+    async function loadDoctorSummaryStats(customFilter) {
+      if (customFilter) {
+        currentDoctorStatFilter = { ...customFilter };
+      }
+      updateStatFilterControlsUI(currentDoctorStatFilter);
+
+      // Containers in Modal
+      const modalCriteria = document.getElementById('criteria-bars-container');
+      const modalInsight = document.getElementById('insight-cards-container');
+      const modalDemo = document.getElementById('demographics-cards-container');
+
+      // Containers in Full Page View
+      const pageCriteria = document.getElementById('criteria-bars-page-container');
+      const pageInsight = document.getElementById('insight-cards-page-container');
+      const pageDemo = document.getElementById('demographics-cards-page-container');
+      const pageTableBody = document.getElementById('page-stats-patients-tbody');
+
+      try {
+        // Build query string
+        const qParams = new URLSearchParams();
+        for (const [k, v] of Object.entries(currentDoctorStatFilter)) {
+          if (v !== undefined && v !== null && v !== '') {
+            qParams.append(k, v);
+          }
+        }
+        const queryString = qParams.toString();
+        const endpoint = `/doctor/summary-statistics${queryString ? '?' + queryString : ''}`;
+
+        const data = await DocApiClient.get(endpoint);
+        if (!data || !data.success) {
+          console.warn('[DoctorStats] Backend data not available');
+          return;
+        }
+
+        const s = data.summary || {};
+        const c = data.criteria || {};
+        const ins = data.insightLevels || {};
+        const demo = data.demographics || {};
+        const filterLabel = data.filterLabel || 'Hari Ini';
+
+        const totalPts = s.totalPatients !== undefined ? s.totalPatients : 0;
+        const compPts = s.completedCount !== undefined ? s.completedCount : 0;
+        const waitPts = (s.waitingCount || 0) + (s.inSessionCount || 0) + (s.scheduledCount || 0);
+        const cancPts = s.cancelledCount !== undefined ? s.cancelledCount : 0;
+
+        // Update filter labels and badges
+        const pageBadge = document.getElementById('stat-filter-active-badge');
+        if (pageBadge) pageBadge.textContent = filterLabel;
+        const modalBadge = document.getElementById('stat-modal-filter-badge');
+        if (modalBadge) modalBadge.textContent = filterLabel;
+        const activeText = document.getElementById('stat-active-period-text');
+        if (activeText) activeText.textContent = `${filterLabel} (Total: ${totalPts} Pasien)`;
+        const tableHeader = document.getElementById('stat-table-period-header');
+        if (tableHeader) tableHeader.textContent = `Daftar Pasien & Status Operasional (${filterLabel})`;
+        const tableCountBadge = document.getElementById('stat-table-count-badge');
+        if (tableCountBadge) tableCountBadge.textContent = `${totalPts} Pasien Terdata`;
+
+        // 1. Update KPI boxes (both modal and page)
+        ['stat-modal-total-patients', 'stat-page-total-patients'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = totalPts;
+        });
+        ['stat-modal-completed-patients', 'stat-page-completed-patients'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = compPts;
+        });
+        ['stat-modal-waiting-patients', 'stat-page-waiting-patients'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = waitPts;
+        });
+        ['stat-modal-cancelled-patients', 'stat-page-cancelled-patients'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = cancPts;
+        });
+
+        // Update Topbar and Quick Summary labels (keep queue in sync if viewing today)
+        if (currentDoctorStatFilter.period === 'today') {
+          const topbarBadge = document.getElementById('topbar-stats-badge');
+          if (topbarBadge) topbarBadge.textContent = `${totalPts} Pasien`;
+          const queueSummaryText = document.getElementById('queue-summary-text');
+          if (queueSummaryText) queueSummaryText.innerHTML = `📊 <strong>${totalPts} Pasien</strong> &bull; ${compPts} Selesai &bull; ${waitPts} Antre`;
+        }
+
+        // 2. Render Criteria Bars HTML
+        const criteriaList = [
+          { key: 'anxiety', icon: '⚡', color: '#0284C7', item: c.anxiety || { label: 'Kecemasan / Panic & GAD', count: 0, percentage: 0 } },
+          { key: 'psychosomatic', icon: '🩺', color: 'var(--color-teal)', item: c.psychosomatic || { label: 'Keluhan Psikosomatik & Somatoform', count: 0, percentage: 0 } },
+          { key: 'depression', icon: '🌧️', color: '#6366F1', item: c.depression || { label: 'Depresi & Kelelahan Kerja (Burnout)', count: 0, percentage: 0 } },
+          { key: 'insomnia', icon: '🌙', color: '#F59E0B', item: c.insomnia || { label: 'Insomnia & Gangguan Irama Sirkadian', count: 0, percentage: 0 } },
+          { key: 'bipolar', icon: '⚖️', color: '#EC4899', item: c.bipolar || { label: 'Gangguan Afektif Bipolar / Siklotimia', count: 0, percentage: 0 } }
+        ];
+
+        const criteriaHtml = criteriaList.map(cr => `
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.82rem;">
+              <span style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                <span>${cr.icon}</span> ${cr.item.label}
+              </span>
+              <span style="font-family: var(--font-mono); font-weight: 800; color: ${cr.color};">
+                ${cr.item.count} Pasien (${cr.item.percentage}%)
+              </span>
+            </div>
+            <div style="height: 9px; width: 100%; background: var(--bg-surface-alt); border-radius: 999px; overflow: hidden; border: 1px solid var(--border-subtle);">
+              <div style="height: 100%; width: ${Math.min(100, Math.max(cr.item.count > 0 ? 8 : 0, cr.item.percentage))}%; background: ${cr.color}; border-radius: 999px; transition: width 0.5s ease;"></div>
+            </div>
+          </div>
+        `).join('');
+
+        if (modalCriteria) modalCriteria.innerHTML = criteriaHtml;
+        if (pageCriteria) pageCriteria.innerHTML = criteriaHtml;
+
+        // 3. Render Insight Levels HTML
+        const insightHtml = `
+          <div style="background: var(--bg-surface-alt); border: 1px solid rgba(16, 185, 129, 0.35); border-left: 4px solid #10B981; border-radius: var(--radius-sm); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #10B981; font-size: 0.84rem;">${ins.good?.label || 'Tilikan Baik (Derajat 4 - 6)'}</strong>
+              <span style="font-family: var(--font-mono); font-weight: 800; color: #10B981; font-size: 0.92rem;">${ins.good?.count || 0} Pasien</span>
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">
+              ${ins.good?.description || 'Menyadari penuh gejala sakit, kooperatif dan sukarela mencari pertolongan medis.'}
+            </div>
+          </div>
+
+          <div style="background: var(--bg-surface-alt); border: 1px solid rgba(245, 158, 11, 0.35); border-left: 4px solid #F59E0B; border-radius: var(--radius-sm); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #F59E0B; font-size: 0.84rem;">${ins.poor?.label || 'Tilikan Parsial / Rendah (Derajat 1 - 3)'}</strong>
+              <span style="font-family: var(--font-mono); font-weight: 800; color: #F59E0B; font-size: 0.92rem;">${ins.poor?.count || 0} Pasien</span>
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">
+              ${ins.poor?.description || 'Menyangkal sebagian kondisi atau menganggap keluhan murni akibat sakit fisik.'}
+            </div>
+          </div>
+        `;
+
+        if (modalInsight) modalInsight.innerHTML = insightHtml;
+        if (pageInsight) pageInsight.innerHTML = insightHtml;
+
+        // 4. Render Demographics HTML
+        const demoHtml = `
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-primary);">Dewasa Produktif (18 - 59 thn)</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">Dominan keluhan burnout &amp; kecemasan kerja</div>
+            </div>
+            <span class="badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal); font-weight: 800; font-size: 0.84rem;">
+              ${demo.adults?.count || 0} Pasien (${demo.adults?.percentage || 0}%)
+            </span>
+          </div>
+
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-primary);">Anak &amp; Remaja (&lt; 18 thn)</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">Stresor akademik, ujian, &amp; regulasi emosi</div>
+            </div>
+            <span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284C7; font-weight: 800; font-size: 0.84rem;">
+              ${demo.children?.count || 0} Pasien (${demo.children?.percentage || 0}%)
+            </span>
+          </div>
+
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-primary);">Lansia / Geriatri (&ge; 60 thn)</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">Gangguan neuropsikiatri, cemas, &amp; insomnia</div>
+            </div>
+            <span class="badge" style="background: rgba(100, 116, 139, 0.15); color: var(--text-muted); font-weight: 800; font-size: 0.84rem;">
+              ${demo.geriatric?.count || 0} Pasien (${demo.geriatric?.percentage || 0}%)
+            </span>
+          </div>
+        `;
+
+        if (modalDemo) modalDemo.innerHTML = demoHtml;
+        if (pageDemo) pageDemo.innerHTML = demoHtml;
+
+        // 5. Render Patients Table in Dedicated Page View
+        const patientsToRender = (data.patients && data.patients.length > 0) ? data.patients : [];
+        if (pageTableBody) {
+          if (patientsToRender.length === 0) {
+            pageTableBody.innerHTML = `
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 36px 16px; color: var(--text-muted);">
+                  Tidak ada rekam konsultasi pasien pada filter periode <strong>${filterLabel}</strong>.
+                </td>
+              </tr>
+            `;
+          } else {
+            pageTableBody.innerHTML = patientsToRender.map((q, idx) => {
+              const pKey = q.patientKey || q.patientId || q.id;
+
+              let vnLabel = `<span style="color: var(--text-muted); font-size: 0.75rem;">-</span>`;
+              if (pKey === 'rian' || q.patientName?.toLowerCase().includes('rian')) {
+                vnLabel = `<span class="badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal); font-size: 0.72rem; font-weight: 700;">🌙 VN 01:32 AM &bull; Skor 8</span>`;
+              } else if (pKey === 'siti' || q.patientName?.toLowerCase().includes('siti')) {
+                vnLabel = `<span class="badge" style="background: rgba(13, 148, 136, 0.15); color: var(--color-teal); font-size: 0.72rem; font-weight: 700;">🌙 VN 02:15 AM &bull; Skor 6</span>`;
+              } else if (q.hasOvernightLog) {
+                vnLabel = `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #F59E0B; font-size: 0.72rem; font-weight: 700;">🌙 VN Teranalisis (${q.anxietyScore || 7}/10)</span>`;
+              }
+
+              let criteriaLabel = q.criteriaLabel || 'Gangguan Cemas / Psikosomatik';
+
+              let statusPill = '';
+              if (q.isExamined) {
+                statusPill = `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 700;">✓ Selesai Disahkan (${q.satusehatEncounterId || 'SATUSEHAT'})</span>`;
+              } else if (q.isCancelled) {
+                statusPill = `<span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #EF4444; font-weight: 700;">❌ Batal Hadir</span>`;
+              } else if (q.operationalStatus === 'in_session') {
+                statusPill = `<span class="badge" style="background: rgba(13, 148, 136, 0.2); color: var(--color-teal); font-weight: 800;">● Di Ruang Praktek</span>`;
+              } else {
+                statusPill = `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #F59E0B; font-weight: 700;">⏳ Menunggu di Poli</span>`;
+              }
+
+              const aptDate = q.appointmentDate || '2026-09-23';
+
+              return `
+                <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s ease;" onmouseover="this.style.background='var(--bg-surface-alt)'" onmouseout="this.style.background='transparent'">
+                  <td style="padding: 12px 14px; font-family: var(--font-mono); font-weight: 700; color: var(--color-teal);">${q.queueNumber || `#A-0${idx + 1}`}</td>
+                  <td style="padding: 12px 14px;">
+                    <strong style="color: var(--text-primary); font-size: 0.86rem; ${q.isCancelled ? 'text-decoration: line-through; opacity: 0.6;' : ''}">
+                      ${q.patientName}
+                    </strong>
+                    <div style="font-size: 0.72rem; color: var(--text-muted);">${q.patientAge || 28} tahun &bull; ${q.registrationSource === 'whatsapp_triage' ? 'WA Triage' : 'Rawat Jalan'}</div>
+                  </td>
+                  <td style="padding: 12px 14px;">
+                    <span style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-primary); font-weight: 600;">${aptDate}</span>
+                    <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary);">${q.timeSlot}</div>
+                  </td>
+                  <td style="padding: 12px 14px;">${vnLabel}</td>
+                  <td style="padding: 12px 14px; font-size: 0.78rem; color: var(--text-secondary);">${criteriaLabel}</td>
+                  <td style="padding: 12px 14px;">${statusPill}</td>
+                  <td style="padding: 12px 14px; text-align: center;">
+                    <button class="btn btn-secondary btn-table-open-patient"
+                            data-patient-key="${pKey}"
+                            data-patient-name="${q.patientName}"
+                            data-patient-age="${q.patientAge || 28}"
+                            data-patient-criteria="${criteriaLabel}"
+                            data-appointment-date="${aptDate}"
+                            data-time-slot="${q.timeSlot}"
+                            data-has-vn="${q.hasOvernightLog ? 'true' : 'false'}"
+                            data-is-signed="${q.isExamined ? 'true' : 'false'}"
+                            style="font-size: 0.74rem; padding: 5px 10px; font-weight: 700; color: var(--color-teal); border-color: var(--color-teal); cursor: pointer;"
+                            title="Buka Ruang Konsultasi untuk ${q.patientName}">
+                      🩺 Buka Konsultasi
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+
+            // Attach open patient click listeners
+            pageTableBody.querySelectorAll('.btn-table-open-patient').forEach(btn => {
+              btn.addEventListener('click', () => {
+                const pKey = btn.getAttribute('data-patient-key');
+                const pName = btn.getAttribute('data-patient-name') || 'Pasien';
+                const pAge = btn.getAttribute('data-patient-age') || '28';
+                const pCrit = btn.getAttribute('data-patient-criteria') || 'Gangguan Jiwa';
+                const pDate = btn.getAttribute('data-appointment-date') || '2026-09-23';
+                const pSlot = btn.getAttribute('data-time-slot') || '09:00 - 09:30 WIB';
+                const pHasVn = btn.getAttribute('data-has-vn') === 'true';
+                const pIsSigned = btn.getAttribute('data-is-signed') === 'true';
+
+                // Ensure patient entry exists in patientsData
+                if (!patientsData[pKey]) {
+                  patientsData[pKey] = {
+                    id: pKey,
+                    name: `${pName} (${pAge} thn)`,
+                    slot: `${pDate} • ${pSlot}`,
+                    channelBadge: pHasVn ? '🌙 WA Triage Krisis' : 'Rawat Jalan Poli',
+                    triageStatus: pHasVn ? '✓ VN Triage Teranalisis' : 'Konsultasi Poli',
+                    hasVn: pHasVn,
+                    vnTitle: `Rekaman Voice Note Triage - ${pName}`,
+                    vnMeta: `Skor Cemas: 7/10 • Enkripsi AES-256`,
+                    vnAudioDuration: '00:38',
+                    isSigned: pIsSigned,
+                    signedEncounterId: pIsSigned ? 'ENC-HISTORICAL-2026' : null,
+                    probesSource: 'Disusun Otomatis dari Rekam Medis & Riwayat Kunjungan',
+                    probes: [
+                      {
+                        color: 'var(--color-teal)',
+                        badge: '1. Riwayat Keluhan & Gejala',
+                        time: '[00:00]',
+                        timeAlert: `Keluhan terkait ${pCrit}`,
+                        question: `Bagaimana perkembangan keluhan dan respon terapi sejak kunjungan ini?`,
+                        rationale: 'Evaluasi respon terapi medikamentosa dan psikoterapi suportif.'
+                      }
+                    ],
+                    ehr: {
+                      date: pDate,
+                      patientName: pName,
+                      patientId: `PAT-${pKey}`,
+                      icd10: 'F41.1 (Gangguan Cemas Menyeluruh / GAD)',
+                      status: pIsSigned ? 'SELESAI (DISAHKAN DPJP)' : 'MENUNGGU DPJP'
+                    }
+                  };
+                }
+
+                renderPatient(pKey);
+                renderDoctorQueueList();
+                switchDoctorWorkspaceView('consultation');
+                if (window.showToast) window.showToast(`🩺 Membuka ruang konsultasi untuk ${pName}`, 'info');
+              });
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[DoctorStats] Error rendering stats:', e);
+      }
+    }
+
+    // Helper to apply filter and re-fetch
+    function applyDoctorFilter(filterObj) {
+      currentDoctorStatFilter = { ...filterObj };
+      loadDoctorSummaryStats(currentDoctorStatFilter);
+    }
+
+    // Preset buttons (Page + Modal)
+    document.querySelectorAll('#stat-quick-presets-group .btn-period-preset, #modal-quick-presets-group .btn-period-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const period = btn.getAttribute('data-period');
+        applyDoctorFilter({ period });
+      });
+    });
+
+    // "On Which Day" controls
+    const inputDay = document.getElementById('filter-stat-input-day');
+    const btnApplyDay = document.getElementById('btn-apply-stat-day');
+    const modalInputDay = document.getElementById('modal-filter-stat-day');
+
+    if (btnApplyDay && inputDay) {
+      btnApplyDay.addEventListener('click', () => {
+        if (inputDay.value) applyDoctorFilter({ period: 'day', date: inputDay.value });
+      });
+    }
+    if (inputDay) {
+      inputDay.addEventListener('change', () => {
+        if (inputDay.value) applyDoctorFilter({ period: 'day', date: inputDay.value });
+      });
+    }
+    if (modalInputDay) {
+      modalInputDay.addEventListener('change', () => {
+        if (modalInputDay.value) applyDoctorFilter({ period: 'day', date: modalInputDay.value });
+      });
+    }
+
+    // "On Which Month" controls
+    const inputMonth = document.getElementById('filter-stat-input-month');
+    const btnApplyMonth = document.getElementById('btn-apply-stat-month');
+    const modalInputMonth = document.getElementById('modal-filter-stat-month');
+
+    if (btnApplyMonth && inputMonth) {
+      btnApplyMonth.addEventListener('click', () => {
+        if (inputMonth.value) applyDoctorFilter({ period: 'specific_month', month: inputMonth.value });
+      });
+    }
+    if (inputMonth) {
+      inputMonth.addEventListener('change', () => {
+        if (inputMonth.value) applyDoctorFilter({ period: 'specific_month', month: inputMonth.value });
+      });
+    }
+    if (modalInputMonth) {
+      modalInputMonth.addEventListener('change', () => {
+        if (modalInputMonth.value) applyDoctorFilter({ period: 'specific_month', month: modalInputMonth.value });
+      });
+    }
+
+    // "On Which Year" controls
+    const selectYear = document.getElementById('filter-stat-select-year');
+    const btnApplyYear = document.getElementById('btn-apply-stat-year');
+    const modalSelectYear = document.getElementById('modal-filter-stat-year');
+
+    if (btnApplyYear && selectYear) {
+      btnApplyYear.addEventListener('click', () => {
+        if (selectYear.value) applyDoctorFilter({ period: 'specific_year', year: selectYear.value });
+      });
+    }
+    if (selectYear) {
+      selectYear.addEventListener('change', () => {
+        if (selectYear.value) applyDoctorFilter({ period: 'specific_year', year: selectYear.value });
+      });
+    }
+    if (modalSelectYear) {
+      modalSelectYear.addEventListener('change', () => {
+        if (modalSelectYear.value) applyDoctorFilter({ period: 'specific_year', year: modalSelectYear.value });
+      });
+    }
+
+    // Reset buttons
+    const btnResetFilter = document.getElementById('btn-reset-stat-filter');
+    const modalBtnResetFilter = document.getElementById('modal-btn-reset-stat-filter');
+
+    [btnResetFilter, modalBtnResetFilter].forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', () => {
+          applyDoctorFilter({ period: 'today' });
+        });
+      }
+    });
+
+    if (btnOpenSummary) {
+      btnOpenSummary.addEventListener('click', async () => {
+        if (summaryModal) summaryModal.classList.add('active');
+        await loadDoctorSummaryStats(currentDoctorStatFilter);
+      });
+    }
+
+    [btnCloseSummary, btnCloseSummaryDialog].forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (summaryModal) summaryModal.classList.remove('active');
+        });
+      }
+    });
+
+    if (summaryModal) {
+      summaryModal.addEventListener('click', (e) => {
+        if (e.target === summaryModal) summaryModal.classList.remove('active');
+      });
+    }
+
+    if (btnRefreshStats) {
+      btnRefreshStats.addEventListener('click', async () => {
+        btnRefreshStats.disabled = true;
+        btnRefreshStats.textContent = '⏳ Memperbarui...';
+        await loadDoctorSummaryStats(currentDoctorStatFilter);
+        btnRefreshStats.disabled = false;
+        btnRefreshStats.textContent = '🔄 Refresh Data Real-Time';
+        if (window.showToast) window.showToast('✅ Data statistik klinis dokter berhasil diperbarui!', 'success');
+      });
+    }
+
+    if (btnRefreshStatsPage) {
+      btnRefreshStatsPage.addEventListener('click', async () => {
+        btnRefreshStatsPage.disabled = true;
+        btnRefreshStatsPage.textContent = '⏳ Memperbarui...';
+        await loadDoctorSummaryStats(currentDoctorStatFilter);
+        btnRefreshStatsPage.disabled = false;
+        btnRefreshStatsPage.textContent = '🔄 Refresh Data Real-Time';
+        if (window.showToast) window.showToast('✅ Data statistik klinis dokter berhasil diperbarui!', 'success');
+      });
+    }
+
+    // Initial Login and Data Loading
+    DocApiClient.login().then(async (ok) => {
+      if (ok) {
+        console.log('[Doctor] Authenticated as dr. Hendra, Sp.KJ.');
+        await loadDoctorQueue();
+      } else {
+        renderPatient('rian');
+      }
+    });
 
     // Zero-Knowledge Encryption Comparison Modal Logic
     const cryptoModal = document.getElementById('doctor-crypto-comparison-modal');
@@ -1286,97 +2718,8 @@
         if (e.target === cryptoModal) cryptoModal.classList.remove('active');
       });
     }
+
   </script>
-
-  <!-- Modal Perbandingan Enkripsi Database vs Tampilan Dokter -->
-  <div class="modal-overlay" id="doctor-crypto-comparison-modal" role="dialog" aria-modal="true">
-    <div class="auth-modal-dialog" style="border: 2px solid var(--color-teal); max-width: 720px; width: 92%;">
-      <div class="modal-header-banner" style="background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%); color: white;">
-        <div class="modal-header-title">
-          <h3 style="display: flex; align-items: center; gap: 8px;">
-            🔒 Pembuktian Enkripsi Zero-Knowledge (UU PDP No. 27/2022)
-          </h3>
-          <p>Perbandingan Data Mentah di Database/Drizzle Studio vs Layar Dokter DPJP</p>
-        </div>
-        <button class="modal-close-btn" id="btn-close-crypto-modal">&times;</button>
-      </div>
-
-      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto;">
-        <div style="background: rgba(13, 148, 136, 0.08); border-left: 4px solid var(--color-teal); padding: 12px 14px; border-radius: var(--radius-md); font-size: 0.84rem; line-height: 1.5;">
-          <strong>Standar Privasi Medis:</strong> Seluruh tabel klinis (<code>clinical_overnight_logs</code>, <code>clinical_interview_probes</code>, dan <code>clinical_medical_records</code>) disimpan dalam bentuk <strong>AES-256-GCM Ciphertext</strong>. Administrator platform maupun siapapun yang membuka Drizzle Studio <strong>TIDAK DAPAT MEMBACA</strong> isi keluhan krisis maupun catatan evaluasi status mental (MSE) pasien.
-        </div>
-
-        <!-- Comparison Table / Cards -->
-        <div style="display: flex; flex-direction: column; gap: 14px;">
-          <!-- Item 1: Raw Overnight Transcript -->
-          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
-            <div style="font-size: 0.8rem; font-weight: 800; color: var(--color-teal); margin-bottom: 8px;">
-              1. Tabel: <code>clinical_overnight_logs.raw_transcript</code> (Pesan Suara Pasien)
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.78rem;">
-              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">
-                <div style="color: #EF4444; font-weight: 700; margin-bottom: 4px;">🔴 Tampilan Drizzle Studio / Admin:</div>
-                <code style="word-break: break-all; color: #FCA5A5; font-size: 0.72rem; line-height: 1.4;">
-                  ENC_AES256_GCM:c5c2f2e6d41583b010e9c8f2:91a4b8... (Tidak dapat dibaca)
-                </code>
-              </div>
-              <div style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">
-                <div style="color: #10B981; font-weight: 700; margin-bottom: 4px;">🟢 Tampilan Dokter Terdekripsi:</div>
-                <div style="color: var(--text-primary); font-style: italic; line-height: 1.4;">
-                  "Dada saya berdebar kencang sekali Dok... rasanya seperti mau mati sesak napas..."
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Item 2: Recommended Question Probe -->
-          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
-            <div style="font-size: 0.8rem; font-weight: 800; color: var(--color-teal); margin-bottom: 8px;">
-              2. Tabel: <code>clinical_interview_probes.recommended_question</code> (Pertanyaan Wawancara Sp.KJ)
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.78rem;">
-              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">
-                <div style="color: #EF4444; font-weight: 700; margin-bottom: 4px;">🔴 Tampilan Drizzle Studio / Admin:</div>
-                <code style="word-break: break-all; color: #FCA5A5; font-size: 0.72rem; line-height: 1.4;">
-                  ENC_AES256_GCM:25d5db462ebc2c633d51aa74:e30c94... (Ciphertext)
-                </code>
-              </div>
-              <div style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">
-                <div style="color: #10B981; font-weight: 700; margin-bottom: 4px;">🟢 Tampilan Dokter Terdekripsi:</div>
-                <div style="color: var(--text-primary); font-style: italic; line-height: 1.4;">
-                  "Mas Rian, di rekaman suara semalam Anda mengeluhkan dada berdebar kencang dan tangan gemetar..."
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Item 3: Medical Record MSE Data -->
-          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
-            <div style="font-size: 0.8rem; font-weight: 800; color: var(--color-teal); margin-bottom: 8px;">
-              3. Tabel: <code>clinical_medical_records.mse_data</code> (Status Mental Pasien)
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.78rem;">
-              <div style="background: var(--code-bg); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4);">
-                <div style="color: #EF4444; font-weight: 700; margin-bottom: 4px;">🔴 Tampilan Drizzle Studio / Admin:</div>
-                <code style="word-break: break-all; color: #FCA5A5; font-size: 0.72rem; line-height: 1.4;">
-                  ENC_AES256_GCM:f8233e1354708ff460741289:80c71a... (Ciphertext)
-                </code>
-              </div>
-              <div style="background: rgba(16, 185, 129, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4);">
-                <div style="color: #10B981; font-weight: 700; margin-bottom: 4px;">🟢 Tampilan Dokter Terdekripsi:</div>
-                <div style="color: var(--text-primary); font-style: italic; line-height: 1.4;">
-                  {"moodAffect":"Mood cemas, afek serasi","thoughtFormContent":"Bentuk pikir koheren..."}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <button class="btn btn-primary" id="btn-close-crypto-dialog" style="width: 100%; padding: 10px; font-weight: 700; background: linear-gradient(135deg, #0D9488 0%, #0284C7 100%);">
-          Tutup & Kembali ke Konsultasi
-        </button>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
+
