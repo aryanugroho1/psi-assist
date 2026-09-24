@@ -31,6 +31,34 @@ const SYSTEM_USERS = [
     schemas: ['ops_schema', 'clinical_schema']
   },
   {
+    id: 'staff-lead-01',
+    username: 'adm-001',
+    email: 'lead.admin@klinikjiwa.id',
+    password: 'password123',
+    role: 'ROLE_ADMIN_LEAD',
+    name: 'Dr. Budi Santoso, MARS',
+    title: 'Kepala Operasional & IT Faskes',
+    jobTitle: 'Kepala Operasional & IT Faskes',
+    facilityId: 'fac-sejahtera',
+    facilityName: 'Klinik Jiwa Sejahtera Pratama',
+    twoFactorSecret: null,
+    schemas: ['ops_schema'] // STRICTLY EXCLUDED FROM clinical_schema
+  },
+  {
+    id: 'staff-lead-01',
+    username: 'adm-lead-001',
+    email: 'lead.admin@klinikjiwa.id',
+    password: 'password123',
+    role: 'ROLE_ADMIN_LEAD',
+    name: 'Dr. Budi Santoso, MARS',
+    title: 'Kepala Operasional & IT Faskes',
+    jobTitle: 'Kepala Operasional & IT Faskes',
+    facilityId: 'fac-sejahtera',
+    facilityName: 'Klinik Jiwa Sejahtera Pratama',
+    twoFactorSecret: null,
+    schemas: ['ops_schema']
+  },
+  {
     id: 'adm-siti',
     username: 'admin',
     email: 'admin@klinikjiwa.id',
@@ -38,6 +66,9 @@ const SYSTEM_USERS = [
     role: 'ROLE_ADMIN',
     name: 'Siti Rahma',
     title: 'Staf Pendaftaran & Kasir',
+    jobTitle: 'Staf Pendaftaran & Kasir',
+    facilityId: 'fac-sejahtera',
+    facilityName: 'Klinik Jiwa Sejahtera Pratama',
     twoFactorSecret: null,
     schemas: ['ops_schema'] // STRICTLY EXCLUDED FROM clinical_schema
   },
@@ -147,7 +178,14 @@ function verifyToken(token) {
 }
 
 function authenticateCredentials(identifier, password, token2fa) {
-  const cleanId = (identifier || '').trim().toLowerCase();
+  let cleanId = (identifier || '').trim().toLowerCase();
+  if (cleanId === 'adm-001' || cleanId === 'adm001' || cleanId === 'lead.admin' || cleanId === 'lead-admin') {
+    cleanId = 'lead.admin@klinikjiwa.id';
+  }
+  if (cleanId === 'adm-kasir' || cleanId === 'kasir') {
+    cleanId = 'admin@klinikjiwa.id';
+  }
+
   let user = SYSTEM_USERS.find(u => {
     const matchesUser = u.username.toLowerCase() === cleanId;
     const matchesEmail = u.email && u.email.toLowerCase() === cleanId;

@@ -1,6 +1,10 @@
 /* Auth Modals & RBAC JS */
 (function () {
   'use strict';
+  const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '3000'))
+    ? 'http://localhost:3000'
+    : '';
+
   const doctorModal = document.getElementById('doctor-login-modal');
   const adminModal = document.getElementById('admin-login-modal');
   const openDoctorBtns = document.querySelectorAll('.trigger-doctor-portal');
@@ -109,7 +113,7 @@
         submitBtn.innerHTML = 'Memvalidasi 2FA Okta Verify...';
 
         try {
-          const response = await fetch('/api/v1/auth/login', {
+          const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -211,6 +215,17 @@
       tabAdminRegister.addEventListener('click', (e) => { e.preventDefault(); switchAdminTab(true); });
     }
 
+    // Demo account button quick-fills
+    document.querySelectorAll('.btn-demo-acc').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const idInput = document.getElementById('admin-staff-id');
+        const pinInput = document.getElementById('admin-pin');
+        if (idInput) idInput.value = btn.getAttribute('data-id');
+        if (pinInput) pinInput.value = btn.getAttribute('data-pin');
+      });
+    });
+
     // Handle Admin Login with Real Backend Authentication
     if (adminLoginForm) {
       adminLoginForm.addEventListener('submit', async (e) => {
@@ -223,7 +238,7 @@
         submitBtn.innerHTML = 'Memvalidasi Kredensial Staf...';
 
         try {
-          const res = await fetch('/api/v1/auth/login', {
+          const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -290,7 +305,7 @@
         regSubmitBtn.innerHTML = 'Mendaftarkan Staf ke Faskes...';
 
         try {
-          const res = await fetch('/api/v1/auth/register-staff', {
+          const res = await fetch(`${API_BASE}/api/v1/auth/register-staff`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

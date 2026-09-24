@@ -1523,13 +1523,25 @@ class DatabaseStore {
 
   findStaffByCredentials(identifier, password) {
     try {
-      const clean = (identifier || '').trim().toLowerCase();
+      let clean = (identifier || '').trim().toLowerCase();
+      if (clean === 'adm-001' || clean === 'adm001' || clean === 'lead.admin' || clean === 'lead-admin') {
+        clean = 'adm-lead-001';
+      }
+      if (clean === 'adm-kasir' || clean === 'kasir') {
+        clean = 'adm-kasir-009';
+      }
+
       const staff = this.sqlite.prepare(`
         SELECT s.*, f.name as facility_name
         FROM ops_facility_staff s
         JOIN ops_facilities f ON s.facility_id = f.id
-        WHERE (LOWER(s.email) = ? OR LOWER(s.staff_id_code) = ?) AND s.password = ? AND s.is_active = 1
-      `).get(clean, clean, password);
+        WHERE (
+          LOWER(s.email) = ? 
+          OR LOWER(s.staff_id_code) = ? 
+          OR (LOWER(s.staff_id_code) = 'adm-lead-001' AND ? = 'adm-lead-001')
+          OR (LOWER(s.staff_id_code) = 'adm-kasir-009' AND ? = 'adm-kasir-009')
+        ) AND s.password = ? AND s.is_active = 1
+      `).get(clean, clean, clean, clean, password);
       return staff || null;
     } catch (err) {
       console.error('[DatabaseStore] findStaffByCredentials error:', err.message);
