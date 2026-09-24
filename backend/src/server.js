@@ -110,12 +110,14 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/v1/auth/login' && method === 'POST') {
       const { parsed } = await parseBody(req);
-      const auth = authenticateCredentials(parsed.username, parsed.password);
-      if (!auth) {
+      const identifier = parsed.username || parsed.email || parsed.sip;
+      const auth = authenticateCredentials(identifier, parsed.password, parsed.token2fa);
+      if (!auth || !auth.success) {
         return sendJson(res, 401, {
           status: 401,
           error: 'Unauthorized',
-          message: 'Kombinasi username atau password salah.'
+          code: auth ? auth.code : 'INVALID_CREDENTIALS',
+          message: auth ? auth.message : 'Kombinasi email/username atau password salah.'
         });
       }
       return sendJson(res, 200, {
@@ -123,6 +125,24 @@ const server = http.createServer(async (req, res) => {
         success: true,
         token: auth.token,
         user: auth.user
+      });
+    }
+
+    if (pathname === '/api/v1/auth/2fa/setup' && method === 'GET') {
+      return sendJson(res, 200, {
+        status: 200,
+        issuer: 'MindScribe AI',
+        account: 'dr.hendra@klinikjiwa.id',
+        secret: 'KVKFKRCPNZQUYMLX',
+        formattedSecret: 'KVKF KRCP NZQU YMLX',
+        otpauth: 'otpauth://totp/MindScribe:dr.hendra@klinikjiwa.id?secret=KVKFKRCPNZQUYMLX&issuer=MindScribe',
+        instructions: {
+          app: 'Okta Verify',
+          step1: 'Buka aplikasi Okta Verify di smartphone',
+          step2: 'Ketuk ikon (+) Tambah Akun -> Pilih "Other" atau "Organization"',
+          step3: 'Scan QR Code atau pilih "Enter Key Manually" dengan kode: KVKF KRCP NZQU YMLX',
+          step4: 'Masukkan 6 digit angka yang muncul pada aplikasi saat login'
+        }
       });
     }
 

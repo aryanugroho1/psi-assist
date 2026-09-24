@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const { startServer, stopServer } = require('../src/server');
 const { META_APP_SECRET, META_VERIFY_TOKEN } = require('../src/whatsapp-service');
 const { db } = require('../src/database');
+const { generateTOTP } = require('../src/auth-rbac');
 
 const TEST_PORT = 3099;
 const BASE_URL = `http://localhost:${TEST_PORT}`;
@@ -69,8 +70,10 @@ async function runTestSuite() {
   console.log('  Compliance: UU PDP No. 27/2022 & SATUSEHAT Kemenkes RI               ');
   console.log('======================================================================\n');
 
-  // Reset database state before testing
-  db.reset();
+  // Reset database state before testing if supported
+  if (typeof db.reset === 'function') {
+    db.reset();
+  }
 
   const server = await startServer(TEST_PORT);
   let passedCount = 0;
@@ -96,12 +99,24 @@ async function runTestSuite() {
 
   try {
     // -------------------------------------------------------------------------
-    // TC 1: Doctor Authentication
+    // TC 1: Doctor Authentication & 2FA Enforcement
     // -------------------------------------------------------------------------
-    await assertCase('TC1: Doctor Authentication & Token Issuance (POST /api/v1/auth/login)', async () => {
+    await assertCase('TC1: Doctor Authentication & 2FA Enforcement (POST /api/v1/auth/login)', async () => {
+      // 1. Invalid 2FA code should be rejected with HTTP 401
+      const failRes = await request('POST', '/api/v1/auth/login', {}, {
+        username: 'dr.hendra',
+        password: 'password123',
+        token2fa: '000000'
+      });
+      if (failRes.statusCode !== 401) throw new Error(`Expected 401 for invalid 2FA, got ${failRes.statusCode}`);
+      if (failRes.data.code !== 'INVALID_2FA') throw new Error(`Expected code INVALID_2FA, got ${failRes.data.code}`);
+
+      // 2. Valid live TOTP code should succeed with HTTP 200 and return token
+      const liveCode = generateTOTP('KVKFKRCPNZQUYMLX');
       const res = await request('POST', '/api/v1/auth/login', {}, {
         username: 'dr.hendra',
-        password: 'password123'
+        password: 'password123',
+        token2fa: liveCode
       });
       if (res.statusCode !== 200) throw new Error(`Expected 200, got ${res.statusCode}`);
       if (!res.data.token) throw new Error('Missing token in response');
