@@ -75,6 +75,14 @@ const server = http.createServer(async (req, res) => {
     if (!pathname.startsWith('/api/')) {
       const publicDir = path.resolve(__dirname, '..', '..');
       let reqPath = pathname === '/' ? '/index.html' : pathname;
+      
+      // Alias normalization for common URL patterns
+      if (reqPath === '/admin_dashboard.html' || reqPath === '/admin-dashboard' || reqPath === '/admin_dashboard') {
+        reqPath = '/admin-dashboard.html';
+      } else if (reqPath === '/doctor_dashboard.html' || reqPath === '/doctor-dashboard' || reqPath === '/doctor_dashboard') {
+        reqPath = '/doctor-dashboard.html';
+      }
+
       const safePath = path.normalize(reqPath).replace(/^(\.\.[\/\\])+/, '');
       const filePath = path.join(publicDir, safePath);
 

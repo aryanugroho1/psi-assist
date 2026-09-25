@@ -6,6 +6,31 @@
   <title>MindScribe — Clinical Doctor Workspace (dr. Hendra, Sp.KJ)</title>
   <meta name="description" content="Workspace Klinis Dokter Spesialis Kedokteran Jiwa - Analisis Voice Note Krisis Malam Hari, Panduan Deep Dive Clinical Interview & SATUSEHAT Integration.">
 
+  <!-- Immediate Strict Auth Guard (prevents bypass before DOM render) -->
+  <style id="auth-cloak">body { opacity: 0 !important; pointer-events: none !important; }</style>
+  <script>
+    (function () {
+      const token = sessionStorage.getItem('mindscribe_auth_token') || localStorage.getItem('mindscribe_auth_token');
+      const userStr = sessionStorage.getItem('mindscribe_user') || localStorage.getItem('mindscribe_user');
+      let user = null;
+      try { user = userStr ? JSON.parse(userStr) : null; } catch (e) { user = null; }
+
+      const validRoles = ['ROLE_DOCTOR', 'ROLE_CLINICIAN'];
+      if (!token || !user || !validRoles.includes(user.role)) {
+        sessionStorage.removeItem('mindscribe_auth_token');
+        sessionStorage.removeItem('mindscribe_user');
+        localStorage.removeItem('mindscribe_auth_token');
+        localStorage.removeItem('mindscribe_user');
+        sessionStorage.setItem('mindscribe_auth_notice', '⚠️ Akses Terbatas: Anda harus login dengan akun Dokter (Sp.KJ) dan 2FA Okta Verify untuk membuka Workspace ini.');
+        window.location.replace('index.html?auth=doctor&auth_required=1');
+      } else {
+        document.addEventListener('DOMContentLoaded', function () {
+          document.getElementById('auth-cloak')?.remove();
+        });
+      }
+    })();
+  </script>
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -409,7 +434,7 @@
         <svg id="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
 
-      <a href="index.html" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem;">
+      <a href="index.html" id="btn-logout-doctor" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem;">
         🚪 Keluar Sesi
       </a>
     </div>
@@ -451,7 +476,14 @@
       </div>
 
       <div class="queue-list" id="doctor-queue-list">
-        <!-- Rendered dynamically by loadDoctorQueue() -->
+        <!-- Rendered dynamically by loadDoctorQueue() with static fallback -->
+        <template id="template-patient-queue-fallback">
+          <div class="patient-queue-card" data-patient-id="siti">
+            <div class="card-top-row">
+              <span class="patient-name">Siti Nurhaliza (22 thn)</span>
+            </div>
+          </div>
+        </template>
         <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.8rem;">
           ⏳ Memuat antrean pasien terkini...
         </div>
@@ -1170,24 +1202,35 @@
   <script src="js/app.js"></script>
   <script>
     // ==========================================================================
-    // DOC API CLIENT — Auto-authenticates as ROLE_DOCTOR
+    // DOC API CLIENT — Authenticated as ROLE_DOCTOR via Session Token
     // ==========================================================================
     const DocApiClient = {
-      BASE: 'http://localhost:3000/api/v1',
-      token: null,
+      BASE: (window.location.protocol === 'file:')
+        ? 'http://localhost:3000/api/v1'
+        : `${window.location.origin}/api/v1`,
+      token: sessionStorage.getItem('mindscribe_auth_token') || localStorage.getItem('mindscribe_auth_token') || null,
 
       async login() {
-        try {
-          const res = await fetch(`${this.BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'doctor', password: 'password123' })
-          });
-          const data = await res.json();
-          if (data.token) { this.token = data.token; return true; }
-        } catch (e) {
-          console.warn('[DocApiClient] Backend not reachable, running offline.', e.message);
+        const savedToken = sessionStorage.getItem('mindscribe_auth_token') || localStorage.getItem('mindscribe_auth_token');
+        if (savedToken) {
+          this.token = savedToken;
+          try {
+            const me = await this.get('/auth/me');
+            if (me && me.user) {
+              this.user = me.user;
+              return true;
+            }
+          } catch(e) {
+            console.warn('[DocApiClient] Token verification failed:', e.message);
+          }
         }
+
+        // NO AUTO-LOGIN BYPASS: Redirect to login modal
+        sessionStorage.removeItem('mindscribe_auth_token');
+        sessionStorage.removeItem('mindscribe_user');
+        localStorage.removeItem('mindscribe_auth_token');
+        localStorage.removeItem('mindscribe_user');
+        window.location.replace('index.html?auth=doctor&auth_required=1');
         return false;
       },
 
@@ -1214,10 +1257,9 @@
       }
     };
 
-    // Initialize on load (non-blocking)
+    // Initialize on load
     DocApiClient.login().then(ok => {
-      if (ok) console.log('[Doctor] Connected to MindScribe backend. EMR signing will persist.');
-      else console.warn('[Doctor] Backend offline — EMR will only update in memory.');
+      if (ok) console.log('[Doctor] Connected to MindScribe backend session.');
     });
 
     // ==========================================
@@ -2718,6 +2760,16 @@
         if (e.target === cryptoModal) cryptoModal.classList.remove('active');
       });
     }
+
+    // Logout Handler
+    document.getElementById('btn-logout-doctor')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      sessionStorage.removeItem('mindscribe_auth_token');
+      sessionStorage.removeItem('mindscribe_user');
+      localStorage.removeItem('mindscribe_auth_token');
+      localStorage.removeItem('mindscribe_user');
+      window.location.replace('index.html?logged_out=1');
+    });
 
   </script>
 </body>

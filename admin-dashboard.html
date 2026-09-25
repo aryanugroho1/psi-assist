@@ -8,6 +8,31 @@
   <meta name="description"
     content="Portal Administrasi, Antrean Pasien, Manajemen Jadwal Dokter & Kasir Faskes. Isolasi Skema Ketat Sesuai UU PDP No. 27/2022.">
 
+  <!-- Immediate Strict Auth Guard (prevents bypass before DOM render) -->
+  <style id="auth-cloak">body { opacity: 0 !important; pointer-events: none !important; }</style>
+  <script>
+    (function () {
+      const token = sessionStorage.getItem('mindscribe_auth_token') || localStorage.getItem('mindscribe_auth_token');
+      const userStr = sessionStorage.getItem('mindscribe_user') || localStorage.getItem('mindscribe_user');
+      let user = null;
+      try { user = userStr ? JSON.parse(userStr) : null; } catch (e) { user = null; }
+
+      const validRoles = ['ROLE_ADMIN', 'ROLE_ADMIN_LEAD', 'ROLE_CASHIER'];
+      if (!token || !user || !validRoles.includes(user.role)) {
+        sessionStorage.removeItem('mindscribe_auth_token');
+        sessionStorage.removeItem('mindscribe_user');
+        localStorage.removeItem('mindscribe_auth_token');
+        localStorage.removeItem('mindscribe_user');
+        sessionStorage.setItem('mindscribe_auth_notice', '⚠️ Akses Terbatas: Anda harus login ke Portal Administrasi & Kasir terlebih dahulu.');
+        window.location.replace('index.html?auth=admin&auth_required=1');
+      } else {
+        document.addEventListener('DOMContentLoaded', function () {
+          document.getElementById('auth-cloak')?.remove();
+        });
+      }
+    })();
+  </script>
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -225,7 +250,7 @@
         </svg>
       </button>
 
-      <a href="index.html" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem;">
+      <a href="index.html" id="btn-logout-admin" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem;">
         🚪 Keluar Portal
       </a>
     </div>
@@ -1282,13 +1307,13 @@
     // API CLIENT — Auto-authenticates as ROLE_ADMIN on load
     // ==========================================================================
     const ApiClient = {
-      BASE: (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '3000'))
+      BASE: (window.location.protocol === 'file:')
         ? 'http://localhost:3000/api/v1'
-        : '/api/v1',
-      token: null,
+        : `${window.location.origin}/api/v1`,
+      token: sessionStorage.getItem('mindscribe_auth_token') || localStorage.getItem('mindscribe_auth_token') || null,
 
       async login() {
-        const savedUserStr = sessionStorage.getItem('mindscribe_user');
+        const savedUserStr = sessionStorage.getItem('mindscribe_user') || localStorage.getItem('mindscribe_user');
         if (savedUserStr) {
           try {
             const savedUser = JSON.parse(savedUserStr);
@@ -1297,7 +1322,7 @@
           } catch(e) {}
         }
 
-        const savedToken = sessionStorage.getItem('mindscribe_auth_token');
+        const savedToken = sessionStorage.getItem('mindscribe_auth_token') || localStorage.getItem('mindscribe_auth_token');
         if (savedToken) {
           this.token = savedToken;
           try {
@@ -1308,26 +1333,16 @@
               return true;
             }
           } catch (e) {
-            // saved token invalid, fallback
+            console.warn('[ApiClient] Token verification failed:', e.message);
           }
         }
 
-        try {
-          const res = await fetch(`${this.BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'lead.admin@klinikjiwa.id', password: 'password123' })
-          });
-          const data = await res.json();
-          if (data.token) {
-            this.token = data.token;
-            this.user = data.user;
-            this.updateTopbarUser(data.user);
-            return true;
-          }
-        } catch (e) {
-          console.warn('[ApiClient] Backend not reachable, running in offline mode.', e.message);
-        }
+        // NO AUTO-LOGIN BYPASS: Redirect to login if unauthenticated
+        sessionStorage.removeItem('mindscribe_auth_token');
+        sessionStorage.removeItem('mindscribe_user');
+        localStorage.removeItem('mindscribe_auth_token');
+        localStorage.removeItem('mindscribe_user');
+        window.location.replace('index.html?auth=admin&auth_required=1');
         return false;
       },
 
@@ -3186,6 +3201,16 @@
         }
       });
     }
+
+    // Logout Handler
+    document.getElementById('btn-logout-admin')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      sessionStorage.removeItem('mindscribe_auth_token');
+      sessionStorage.removeItem('mindscribe_user');
+      localStorage.removeItem('mindscribe_auth_token');
+      localStorage.removeItem('mindscribe_user');
+      window.location.replace('index.html?logged_out=1');
+    });
 
   </script>
 </body>

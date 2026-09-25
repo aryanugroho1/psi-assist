@@ -1,9 +1,9 @@
 /* Auth Modals & RBAC JS */
 (function () {
   'use strict';
-  const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '3000'))
+  const API_BASE = (window.location.protocol === 'file:')
     ? 'http://localhost:3000'
-    : '';
+    : window.location.origin;
 
   const doctorModal = document.getElementById('doctor-login-modal');
   const adminModal = document.getElementById('admin-login-modal');
@@ -157,8 +157,10 @@
           // Successful 2FA Login
           submitBtn.innerHTML = '✓ 2FA Terverifikasi! Mengalihkan...';
           sessionStorage.setItem('mindscribe_auth_token', data.token);
+          localStorage.setItem('mindscribe_auth_token', data.token);
           if (data.user) {
             sessionStorage.setItem('mindscribe_user', JSON.stringify(data.user));
+            localStorage.setItem('mindscribe_user', JSON.stringify(data.user));
           }
 
           if (window.showToast) {
@@ -264,8 +266,10 @@
           // Successful Staff Login
           submitBtn.innerHTML = '✓ Terverifikasi! Mengalihkan...';
           sessionStorage.setItem('mindscribe_auth_token', data.token);
+          localStorage.setItem('mindscribe_auth_token', data.token);
           if (data.user) {
             sessionStorage.setItem('mindscribe_user', JSON.stringify(data.user));
+            localStorage.setItem('mindscribe_user', JSON.stringify(data.user));
           }
 
           if (window.showToast) {
@@ -382,6 +386,81 @@
           window.showToast('⛔ HTTP 403 Forbidden: Modul rekam medis menolak akses ROLE_ADMIN!', 'error');
         }
       });
+    }
+
+    // Quick Demo Login for Doctor (Authenticated with valid JWT)
+    const quickDocBtn = document.getElementById('btn-quick-doctor-demo');
+    if (quickDocBtn) {
+      quickDocBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        quickDocBtn.disabled = true;
+        quickDocBtn.innerHTML = '⏳ Mengotentikasi Akun Demo (dr. Hendra)...';
+
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: 'doctor',
+              password: 'password123'
+            })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            sessionStorage.setItem('mindscribe_auth_token', data.token);
+            sessionStorage.setItem('mindscribe_user', JSON.stringify(data.user));
+            localStorage.setItem('mindscribe_auth_token', data.token);
+            localStorage.setItem('mindscribe_user', JSON.stringify(data.user));
+
+            quickDocBtn.innerHTML = '✓ Terverifikasi! Mengalihkan ke Workspace...';
+            if (window.showToast) {
+              window.showToast('✓ Sesi Terverifikasi: Membuka Workspace dr. Hendra, Sp.KJ...', 'success');
+            }
+            setTimeout(() => {
+              closeModal();
+              window.location.href = 'doctor-dashboard.html';
+            }, 400);
+            return;
+          }
+        } catch (err) {
+          console.error('[QuickLogin] Error:', err);
+        }
+
+        quickDocBtn.disabled = false;
+        quickDocBtn.innerHTML = '⚡ Masuk Cepat Akun Demo (dr. Hendra, Sp.KJ)';
+      });
+    }
+
+    // Handle URL Auth & Logout State on Page Load
+    const urlParams = new URLSearchParams(window.location.search);
+    const authTarget = urlParams.get('auth');
+    const authRequired = urlParams.get('auth_required');
+    const isLoggedOut = urlParams.get('logged_out');
+
+    if (isLoggedOut) {
+      setTimeout(() => {
+        if (window.showToast) window.showToast('✓ Anda telah berhasil keluar dari sesi (Logged out).', 'info');
+      }, 300);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    if (authTarget === 'doctor' || (authRequired && authTarget !== 'admin')) {
+      openModal(doctorModal);
+      const notice = sessionStorage.getItem('mindscribe_auth_notice');
+      if (notice && doc2faErrorAlert && doc2faErrorText) {
+        doc2faErrorText.textContent = notice;
+        doc2faErrorAlert.style.display = 'block';
+        sessionStorage.removeItem('mindscribe_auth_notice');
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (authTarget === 'admin') {
+      openModal(adminModal);
+      const notice = sessionStorage.getItem('mindscribe_auth_notice');
+      if (notice && window.showToast) {
+        window.showToast(notice, 'error');
+        sessionStorage.removeItem('mindscribe_auth_notice');
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }
 

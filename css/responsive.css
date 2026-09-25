@@ -1,40 +1,309 @@
-/* Responsive CSS */
+/* ==============================================================================
+   MindScribe AI & Triage Platform - Dynamic Responsive Design System
+   Optimized for: 4K/QHD Extra Monitors, Laptop Screens (13"-16" with 125%/150% DPI Scaling),
+   Tablets & Mobile Devices.
+   ============================================================================== */
+
+/* Base Fluid Typography & Viewport Adapters */
+html {
+  font-size: clamp(14px, 0.95vw + 4px, 16px);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ==============================================================================
+   1. LAPTOP & SCALED MONITORS (max-width: 1440px / Windows 125%-150% Scale)
+   ============================================================================== */
+@media (max-width: 1440px) {
+  /* Doctor Clinical Workspace */
+  .workspace-main-container {
+    grid-template-columns: 280px 1.1fr 380px !important;
+  }
+  
+  .doctor-topbar {
+    padding: 8px 16px !important;
+  }
+
+  .col-assistant-header,
+  .col-consultation-header,
+  .queue-header {
+    padding: 10px 14px !important;
+  }
+
+  /* Admin Operations Workspace */
+  .admin-container {
+    max-width: 100% !important;
+    padding: 18px 20px !important;
+  }
+
+  .admin-stats-row {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 14px !important;
+  }
+}
+
+/* ==============================================================================
+   2. COMPACT LAPTOPS & TABLET LANDSCAPE (max-width: 1200px)
+   ============================================================================== */
+@media (max-width: 1200px) {
+  /* Doctor Clinical Workspace: Smooth Flexible Columns */
+  .workspace-main-container {
+    grid-template-columns: 250px 1fr 340px !important;
+  }
+
+  .patient-summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Admin Operations: 2-Column Stats Grid */
+  .admin-stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  .admin-stat-box {
+    padding: 16px !important;
+  }
+
+  .admin-stat-number {
+    font-size: 1.6rem !important;
+  }
+
+  /* Landing Page Elements */
+  .hero-title {
+    font-size: clamp(2.2rem, 3.5vw, 3rem) !important;
+  }
+  
+  .scribe-workspace-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .workspace-col-transcript {
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    max-height: 380px !important;
+  }
+}
+
+/* ==============================================================================
+   3. TABLETS & SMALL LAPTOP WINDOWS (max-width: 1024px)
+   ============================================================================== */
 @media (max-width: 1024px) {
-  .hero-title { font-size: 2.8rem; }
-  .metrics-ribbon { grid-template-columns: repeat(2, 1fr); gap: 24px; }
-  .metric-card:nth-child(2)::after { display: none; }
-  .scribe-workspace-grid { grid-template-columns: 1fr; }
-  .workspace-col-transcript { border-right: none; border-bottom: 1px solid var(--border-subtle); max-height: 400px; }
-  .whatsapp-demo-wrapper { grid-template-columns: 1fr; gap: 36px; }
-  .phone-mockup { max-width: 360px; height: 640px; }
-  .personas-grid { grid-template-columns: 1fr; }
-  .security-pillars { grid-template-columns: repeat(2, 1fr); }
-  .calc-grid { grid-template-columns: 1fr; gap: 32px; }
-  .footer-top { grid-template-columns: 1fr 1fr; gap: 32px; }
+  /* Topbar Wrapping */
+  .doctor-topbar,
+  .admin-topbar {
+    height: auto !important;
+    padding: 10px 16px !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  /* Doctor Workspace: Responsive Multi-Column Flow */
+  .workspace-main-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: calc(100vh - 70px) !important;
+    overflow-y: auto !important;
+  }
+
+  .col-queue {
+    max-height: 320px !important;
+    border-right: none !important;
+    border-bottom: 2px solid var(--border-subtle) !important;
+  }
+
+  .col-consultation {
+    border-right: none !important;
+    border-bottom: 2px solid var(--border-subtle) !important;
+    min-height: 480px !important;
+  }
+
+  .col-assistant {
+    min-height: 480px !important;
+  }
+
+  /* Landing Page Elements */
+  .metrics-ribbon {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 20px !important;
+  }
+  .metric-card:nth-child(2)::after {
+    display: none !important;
+  }
+  .whatsapp-demo-wrapper {
+    grid-template-columns: 1fr !important;
+    gap: 36px !important;
+  }
+  .phone-mockup {
+    max-width: 360px !important;
+    height: 620px !important;
+    margin: 0 auto !important;
+  }
+  .personas-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .security-pillars {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .calc-grid {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+  .footer-top {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 32px !important;
+  }
 }
+
+/* ==============================================================================
+   4. SHORT LAPTOP DISPLAYS (Vertical Viewport Constrained: max-height: 820px)
+   Crucial fix for: Doctor 2FA Pop-up login & Form Accessibility on Laptops
+   ============================================================================== */
+@media (max-height: 820px) {
+  .modal-overlay {
+    padding: 10px !important;
+    align-items: flex-start !important;
+  }
+
+  .auth-modal-dialog {
+    max-height: calc(100dvh - 20px) !important;
+    margin: 10px auto !important;
+  }
+
+  .modal-header-banner {
+    padding: 14px 20px !important;
+  }
+
+  .modal-header-title h3 {
+    font-size: 1.15rem !important;
+  }
+
+  .modal-body {
+    padding: 14px 20px 20px 20px !important;
+    gap: 12px !important;
+  }
+
+  #okta-setup-card {
+    padding: 10px 12px !important;
+    margin-bottom: 10px !important;
+  }
+
+  #okta-setup-card img {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .form-group {
+    gap: 4px !important;
+  }
+
+  .form-control {
+    padding: 9px 12px !important;
+  }
+
+  .rbac-security-notice {
+    padding: 8px 12px !important;
+    font-size: 0.78rem !important;
+  }
+}
+
+/* ==============================================================================
+   5. MOBILE & SMALL SCREEN (max-width: 768px)
+   ============================================================================== */
 @media (max-width: 768px) {
-  .nav-links { display: none; }
-  .hero-title { font-size: 2.2rem; }
-  .hero-subtitle { font-size: 1.05rem; }
-  .section-title { font-size: 1.9rem; }
-  .metrics-ribbon { grid-template-columns: 1fr; padding: 20px; }
-  .metric-card::after { display: none !important; }
-  .security-pillars { grid-template-columns: 1fr; }
-  .testimonials-grid { grid-template-columns: 1fr; }
-  .footer-top { grid-template-columns: 1fr; }
-  .audio-player-panel { flex-wrap: wrap; gap: 12px; }
-  .groq-speed-pill { width: 100%; justify-content: center; }
-  .scribe-footer-bar { flex-direction: column; align-items: stretch; text-align: center; }
-  .btn-sign-approve { width: 100%; justify-content: center; }
+  .nav-links {
+    display: none !important;
+  }
+  .hero-title {
+    font-size: 2.1rem !important;
+    line-height: 1.25 !important;
+  }
+  .hero-subtitle {
+    font-size: 1rem !important;
+  }
+  .section-title {
+    font-size: 1.75rem !important;
+  }
+  .metrics-ribbon {
+    grid-template-columns: 1fr !important;
+    padding: 16px !important;
+  }
+  .metric-card::after {
+    display: none !important;
+  }
+  .admin-stats-row {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-nav-tabs {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    padding-bottom: 6px !important;
+  }
+  .admin-tab-item {
+    padding: 10px 14px !important;
+    font-size: 0.85rem !important;
+  }
+  .security-pillars {
+    grid-template-columns: 1fr !important;
+  }
+  .testimonials-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .footer-top {
+    grid-template-columns: 1fr !important;
+  }
+  .audio-player-panel {
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+  .groq-speed-pill {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .scribe-footer-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    text-align: center !important;
+  }
+  .btn-sign-approve {
+    width: 100% !important;
+    justify-content: center !important;
+  }
 }
+
+/* ==============================================================================
+   6. EXTRA SMALL MOBILE (max-width: 480px)
+   ============================================================================== */
 @media (max-width: 480px) {
-  .hero-title { font-size: 1.85rem; }
-  .btn { width: 100%; }
-  .hero-actions { flex-direction: column; width: 100%; }
-  .phone-mockup { max-width: 320px; height: 580px; border-radius: 36px; padding: 8px; }
-  .phone-screen { border-radius: 28px; }
-  .calc-results-panel { padding: 20px; }
-  .stat-number { font-size: 1.8rem; }
-  .cta-box { padding: 40px 20px; }
-  .cta-box h2 { font-size: 1.8rem; }
+  .hero-title {
+    font-size: 1.75rem !important;
+  }
+  .btn {
+    width: 100% !important;
+  }
+  .hero-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  .phone-mockup {
+    max-width: 310px !important;
+    height: 560px !important;
+    border-radius: 36px !important;
+    padding: 8px !important;
+  }
+  .phone-screen {
+    border-radius: 28px !important;
+  }
+  .calc-results-panel {
+    padding: 18px !important;
+  }
+  .stat-number {
+    font-size: 1.7rem !important;
+  }
+  .cta-box {
+    padding: 32px 18px !important;
+  }
+  .cta-box h2 {
+    font-size: 1.65rem !important;
+  }
 }
