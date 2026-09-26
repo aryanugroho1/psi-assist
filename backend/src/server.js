@@ -246,7 +246,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, result);
     }
 
-    if (pathname === '/api/v1/baileys/qr' && method === 'GET') {
+    if ((pathname === '/api/v1/baileys/qr' || pathname === '/api/v1/baileys' || pathname === '/api/v1/baileys/' || pathname === '/wa' || pathname === '/whatsapp') && method === 'GET') {
       const bStatus = getBaileysStatus();
       const html = `<!DOCTYPE html>
 <html lang="id">
