@@ -1602,7 +1602,7 @@
             <div class="vn-player-hud" style="animation: fadeIn 0.3s ease;">
               <div style="display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                  <button class="audio-play-btn" id="vn-play-btn" style="width: 36px; height: 36px;" title="Putar Voice Note Semalam">
+                  <button class="audio-play-btn" id="vn-play-btn" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Putar Voice Note Semalam">
                     <svg id="vn-play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   </button>
                   <div>
@@ -1615,6 +1615,19 @@
                 </span>
               </div>
               <canvas id="vn-waveform" style="width: 100%; height: 26px; background: rgba(255,255,255,0.05); border-radius: 4px; margin-top: 8px;"></canvas>
+
+              <!-- Transkrip Sederhana Voice Note Pasien -->
+              <div class="vn-transcript-card" id="vn-transcript-box" style="margin-top: 10px; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-teal); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+                    <span>📝</span> Transkrip Suara Semalam (Triage Pasien)
+                  </span>
+                  <span class="badge" style="font-size: 0.68rem; background: rgba(16, 185, 129, 0.15); color: #10B981;">Terenkripsi AES-256</span>
+                </div>
+                <p style="margin: 0; font-size: 0.82rem; color: #E2E8F0; line-height: 1.5; font-style: italic;" id="vn-transcript-text">
+                  "${patient.transcript || 'Memuat transkrip rekaman suara pasien...'}"
+                </p>
+              </div>
             </div>
           `;
           initWaveform();
@@ -1642,28 +1655,35 @@
       }
 
       // 4. Render Deep Dive Interview Probes
-      const probesContainer = document.getElementById('interview-probes-container');
-      if (probesContainer) {
-        probesContainer.innerHTML = '';
-        patient.probes.forEach((probe, idx) => {
-          const card = document.createElement('div');
-          card.className = 'interview-probe-card';
-          card.style.borderLeft = `4px solid ${probe.color}`;
-          card.style.animation = 'fadeIn 0.3s ease';
-          card.innerHTML = `
-            <div class="probe-header">
-              <span class="probe-badge" style="color: ${probe.color};">${probe.badge}</span>
-              <button class="verify-timestamp-badge" onclick="alert('${probe.timeAlert}')" title="Klik untuk verifikasi audio bukti wawancara">${probe.time}</button>
-            </div>
-            <div class="probe-question">
-              <strong>Tanyakan Langsung ke ${patient.name.split('(')[0].trim()}:</strong><br>
-              <em>"${probe.question}"</em>
-            </div>
-            <div class="probe-rationale">
-              <strong>Tujuan Klinis:</strong> ${probe.rationale}
-            </div>
-          `;
-          probesContainer.appendChild(card);
+      renderInterviewProbes(patient);
+
+      // 4b. Fetch real overnight log & transcript from API if patient has overnight log
+      if (patient.hasVn && patient.appointmentId) {
+        DocApiClient.get(`/doctor/overnight-log/${patient.appointmentId}`).then(res => {
+          if (res && res.overnightLog) {
+            const log = res.overnightLog;
+            patient.transcript = log.rawTranscript;
+            if (log.voiceNote && log.voiceNote.ephemeralToken) {
+              patient.ephemeralToken = log.voiceNote.ephemeralToken;
+            }
+            const transcriptEl = document.getElementById('vn-transcript-text');
+            if (transcriptEl && log.rawTranscript) {
+              transcriptEl.textContent = `"${log.rawTranscript}"`;
+            }
+            if (log.interviewProbes && log.interviewProbes.length > 0) {
+              patient.probes = log.interviewProbes.map((p, idx) => ({
+                color: idx === 0 ? 'var(--color-teal)' : idx === 1 ? 'var(--color-primary)' : '#10B981',
+                badge: p.badgeTitle || p.badge_title || `${idx + 1}. Bukti Audio & Temuan Klinis`,
+                time: p.timestampBadge || p.timestamp_badge || `[00:${String(Math.floor(p.audioOffsetSeconds || (idx + 1) * 10)).padStart(2, '0')}]`,
+                timeAlert: `Fokus Anamnesis: ${p.badgeTitle || 'Eksplorasi keluhan'}`,
+                question: p.recommendedQuestion || p.recommended_question,
+                rationale: p.clinicalRationale || p.clinical_rationale
+              }));
+              renderInterviewProbes(patient);
+            }
+          }
+        }).catch(err => {
+          console.warn('[DoctorDashboard] Overnight log fetch error:', err);
         });
       }
 
@@ -2150,28 +2170,136 @@
       });
     }
 
-    // Voice Note Audio & Waveform Simulation
+    // Helper to render interview probes
+    function renderInterviewProbes(patient) {
+      const probesContainer = document.getElementById('interview-probes-container');
+      if (!probesContainer || !patient || !patient.probes) return;
+      probesContainer.innerHTML = '';
+      patient.probes.forEach((probe, idx) => {
+        const card = document.createElement('div');
+        card.className = 'interview-probe-card';
+        card.style.borderLeft = `4px solid ${probe.color}`;
+        card.style.animation = 'fadeIn 0.3s ease';
+        card.innerHTML = `
+          <div class="probe-header">
+            <span class="probe-badge" style="color: ${probe.color};">${probe.badge}</span>
+            <button class="verify-timestamp-badge" onclick="alert('${probe.timeAlert}')" title="Klik untuk verifikasi audio bukti wawancara">${probe.time}</button>
+          </div>
+          <div class="probe-question">
+            <strong>Tanyakan Langsung ke ${patient.name.split('(')[0].trim()}:</strong><br>
+            <em>"${probe.question}"</em>
+          </div>
+          <div class="probe-rationale">
+            <strong>Tujuan Klinis:</strong> ${probe.rationale}
+          </div>
+        `;
+        probesContainer.appendChild(card);
+      });
+    }
+
+    // Voice Note Audio & Real Audio Player with Bearer Decryption
+    let activeAudioPlayer = null;
     let isVnPlaying = false;
+    let waveformAnimId = null;
+
     function attachAudioPlayListener() {
       const playBtn = document.getElementById('vn-play-btn');
       if (!playBtn) return;
       isVnPlaying = false;
 
-      playBtn.addEventListener('click', () => {
+      playBtn.onclick = async () => {
         const patient = patientsData[activePatientId];
-        isVnPlaying = !isVnPlaying;
-        if (isVnPlaying) {
-          playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
-          if (window.showToast) {
-            window.showToast(`🎧 Memutar rekaman Voice Note ${patient.name} (${patient.vnAudioDuration}). Suara didekripsi on-the-fly di browser dokter.`, 'info');
-          }
-        } else {
-          playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+        if (!patient) return;
+
+        // Toggle Pause if currently playing
+        if (isVnPlaying && activeAudioPlayer) {
+          activeAudioPlayer.pause();
+          activeAudioPlayer.currentTime = 0;
+          isVnPlaying = false;
+          playBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+          if (waveformAnimId) cancelAnimationFrame(waveformAnimId);
+          initWaveform(false);
+          return;
         }
-      });
+
+        // Fetch audio stream from backend
+        try {
+          playBtn.innerHTML = '<span style="font-size: 0.72rem;">⏳</span>';
+
+          // Get fresh token if needed
+          let token = patient.ephemeralToken;
+          if (!token && patient.appointmentId) {
+            const logRes = await DocApiClient.get(`/doctor/overnight-log/${patient.appointmentId}`);
+            if (logRes && logRes.overnightLog && logRes.overnightLog.voiceNote) {
+              token = logRes.overnightLog.voiceNote.ephemeralToken;
+              patient.ephemeralToken = token;
+            }
+          }
+
+          const streamUrl = `${DocApiClient.BASE}/doctor/audio/${token || 'ephem-tok-wa-valid'}`;
+          const res = await fetch(streamUrl, {
+            headers: { 'Authorization': `Bearer ${DocApiClient.token}` }
+          });
+
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: Gagal memuat audio`);
+          }
+
+          const blob = await res.blob();
+          const audioObjectUrl = URL.createObjectURL(blob);
+
+          if (activeAudioPlayer) {
+            activeAudioPlayer.pause();
+          }
+
+          activeAudioPlayer = new Audio(audioObjectUrl);
+
+          activeAudioPlayer.onplay = () => {
+            isVnPlaying = true;
+            playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+            animateWaveformActive();
+            if (window.showToast) {
+              window.showToast(`🎧 Memutar Voice Note ${patient.name}. Suara didekripsi langsung di browser dokter.`, 'info');
+            }
+          };
+
+          activeAudioPlayer.onended = () => {
+            isVnPlaying = false;
+            playBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+            if (waveformAnimId) cancelAnimationFrame(waveformAnimId);
+            initWaveform(false);
+            if (window.showToast) {
+              window.showToast('✓ Selesai memutar rekaman suara semalam.', 'success');
+            }
+          };
+
+          activeAudioPlayer.onerror = (err) => {
+            console.error('[AudioPlayer] Error playback:', err);
+            isVnPlaying = false;
+            playBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+            if (waveformAnimId) cancelAnimationFrame(waveformAnimId);
+            initWaveform(false);
+            if (window.showToast) {
+              window.showToast('Gagal memutar audio pasien (format browser).', 'warning');
+            }
+          };
+
+          await activeAudioPlayer.play();
+
+        } catch (err) {
+          console.error('[AudioPlay] Stream error:', err);
+          isVnPlaying = false;
+          playBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+          if (waveformAnimId) cancelAnimationFrame(waveformAnimId);
+          initWaveform(false);
+          if (window.showToast) {
+            window.showToast(`Gagal memutar audio: ${err.message}`, 'error');
+          }
+        }
+      };
     }
 
-    function initWaveform() {
+    function initWaveform(isActive = false) {
       const vnCanvas = document.getElementById('vn-waveform');
       if (!vnCanvas) return;
       const ctx = vnCanvas.getContext('2d');
@@ -2183,9 +2311,37 @@
       const barW = vnCanvas.width / bars;
       for (let i = 0; i < bars; i++) {
         const h = (Math.sin(i * 0.45) * 0.5 + 0.5) * 18 + 4;
-        ctx.fillStyle = i < 16 ? '#14B8A6' : 'rgba(255,255,255,0.2)';
+        ctx.fillStyle = isActive ? '#10B981' : (i < 16 ? '#14B8A6' : 'rgba(255,255,255,0.2)');
         ctx.fillRect(i * barW, (26 - h) / 2, barW - 2, h);
       }
+    }
+
+    function animateWaveformActive() {
+      const vnCanvas = document.getElementById('vn-waveform');
+      if (!vnCanvas) return;
+      const ctx = vnCanvas.getContext('2d');
+      let step = 0;
+
+      function draw() {
+        if (!isVnPlaying) return;
+        step += 0.15;
+        vnCanvas.width = vnCanvas.parentElement.clientWidth || 320;
+        vnCanvas.height = 26;
+        ctx.clearRect(0, 0, vnCanvas.width, vnCanvas.height);
+
+        const bars = 44;
+        const barW = vnCanvas.width / bars;
+        for (let i = 0; i < bars; i++) {
+          const h = (Math.sin(i * 0.45 + step) * 0.5 + 0.5) * 20 + 4;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 26);
+          gradient.addColorStop(0, '#10B981');
+          gradient.addColorStop(1, '#0284C7');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(i * barW, (26 - h) / 2, barW - 2, h);
+        }
+        waveformAnimId = requestAnimationFrame(draw);
+      }
+      draw();
     }
 
     // ==========================================================================
