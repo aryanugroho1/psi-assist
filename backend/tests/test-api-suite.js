@@ -70,10 +70,9 @@ async function runTestSuite() {
   console.log('  Compliance: UU PDP No. 27/2022 & SATUSEHAT Kemenkes RI               ');
   console.log('======================================================================\n');
 
-  // Reset database state before testing if supported
-  if (typeof db.reset === 'function') {
-    db.reset();
-  }
+  // Reset and re-seed database state before testing to ensure 100% idempotency
+  const seedScript = require('path').resolve(__dirname, '../../drizzle/seed.js');
+  require('child_process').execSync(`"${process.execPath}" "${seedScript}"`, { stdio: 'ignore' });
 
   const server = await startServer(TEST_PORT);
   let passedCount = 0;
@@ -339,6 +338,10 @@ async function runTestSuite() {
       });
       if (audioRes.statusCode !== 200) throw new Error(`Failed to stream audio: ${audioRes.statusCode}`);
 
+      // 10.3 Reset previous record if exists for idempotency
+      db.sqlite.prepare("DELETE FROM clinical_medical_records WHERE appointment_id = 'apt-rian-01'").run();
+      db.sqlite.prepare("UPDATE ops_appointments SET operational_status = 'scheduled' WHERE id = 'apt-rian-01'").run();
+
       // 10.3 Sign medical record
       const signRes = await request('POST', '/api/v1/doctor/medical-records', {
         Authorization: `Bearer ${doctorToken}`
@@ -372,6 +375,10 @@ async function runTestSuite() {
     // TC 11: Admin Doctor Creation & Dynamic WhatsApp Bot Sync
     // -------------------------------------------------------------------------
     await assertCase('TC11: Admin Doctor Creation (POST /api/v1/admin/doctors) & Dynamic WhatsApp Bot Sync', async () => {
+      // 11.0 Clean up previous test doctor if exists (idempotency)
+      db.sqlite.prepare("DELETE FROM ops_doctor_schedules WHERE doctor_id LIKE 'doc-dimas%'").run();
+      db.sqlite.prepare("DELETE FROM ops_doctors WHERE sip_number = '503/SIP-DSKJ/2026/089' OR full_name LIKE '%Dimas%'").run();
+
       // 11.1 Admin adds a new psychiatric doctor
       const newDocPayload = {
         fullName: 'dr. Dimas Wardhana, Sp.KJ',
@@ -416,12 +423,12 @@ async function runTestSuite() {
     // -------------------------------------------------------------------------
     await assertCase('TC12: Zero-Knowledge AES-256 Column Encryption in DB vs Decrypted Doctor View', async () => {
       // 1. Check raw database stored values directly: MUST be encrypted ciphertext tokens!
-      const rawLog = db.clinical.overnightLogs.get('onl-rian-01');
+      const rawLog = db.sqlite.prepare('SELECT raw_transcript as rawTranscript FROM clinical_overnight_logs WHERE id = ?').get('onl-rian-01');
       if (!rawLog || !rawLog.rawTranscript.startsWith('ENC_AES256_GCM:')) {
         throw new Error(`Overnight transcript is not encrypted in database! Value: ${rawLog?.rawTranscript}`);
       }
 
-      const rawProbe = db.clinical.interviewProbes.get('prb-01');
+      const rawProbe = db.sqlite.prepare('SELECT recommended_question as recommendedQuestion FROM clinical_interview_probes WHERE id = ?').get('prb-01');
       if (!rawProbe || !rawProbe.recommendedQuestion.startsWith('ENC_AES256_GCM:')) {
         throw new Error(`Interview probe recommended question is not encrypted in database! Value: ${rawProbe?.recommendedQuestion}`);
       }

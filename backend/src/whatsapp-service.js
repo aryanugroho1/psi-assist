@@ -48,11 +48,6 @@ function verifyWebhookSignature(rawBody, signatureHeader) {
   const [algo, signature] = signatureHeader.split('=');
   if (algo !== 'sha256' || !signature) return false;
 
-  // If running with placeholder secret in development, log and allow
-  if (META_APP_SECRET === 'mindscribe_meta_secret_hash_981247') {
-    return true;
-  }
-
   try {
     const expectedSignature = crypto
       .createHmac('sha256', META_APP_SECRET)
@@ -254,13 +249,22 @@ function handleConversationalTriage(eventBody) {
   if (type === 'text' && !effectiveDoctorId && !voiceNoteBuffer) {
     const activeDoctors = db.getActiveDoctors();
 
-    // Check if user answered with a doctor index or doctor name
-    const lowerText = text.toLowerCase();
+    // Check if user answered with a doctor index (1, 2, 3...) or doctor name
+    const lowerText = (text || '').toLowerCase().trim();
     let chosenDoc = null;
-    if (lowerText === '1' || lowerText.includes('hendra')) {
-      chosenDoc = activeDoctors.find(d => d.id === 'doc-hendra') || activeDoctors[0];
-    } else if (lowerText === '2' || lowerText.includes('rina')) {
-      chosenDoc = activeDoctors.find(d => d.id === 'doc-rina') || activeDoctors[1] || activeDoctors[0];
+
+    // 1. Dynamic numeric index matching (e.g. 1, 2, 3... up to N doctors)
+    const docIndex = parseInt(lowerText, 10);
+    if (!isNaN(docIndex) && docIndex >= 1 && docIndex <= activeDoctors.length) {
+      chosenDoc = activeDoctors[docIndex - 1];
+    } else if (lowerText) {
+      // 2. Dynamic name matching (first name, last name, or full name)
+      chosenDoc = activeDoctors.find(d => {
+        const docNameLower = d.fullName.toLowerCase();
+        const cleanName = docNameLower.replace(/dr\.?\s*/g, '').replace(/,\s*sp\.?kj/g, '').trim();
+        const nameParts = cleanName.split(/\s+/);
+        return nameParts.some(part => part.length >= 3 && lowerText.includes(part)) || lowerText.includes(docNameLower);
+      });
     }
 
     if (chosenDoc) {
@@ -317,12 +321,13 @@ function handleConversationalTriage(eventBody) {
     const availableSlots = db.getAvailableSlots(effectiveDoctorId);
 
     // Check if user picked a slot
-    const slotIdx = parseInt(text.trim(), 10);
+    const safeText = (text || '').trim();
+    const slotIdx = safeText ? parseInt(safeText, 10) : NaN;
     let chosenSlot = null;
     if (!isNaN(slotIdx) && slotIdx >= 1 && slotIdx <= availableSlots.length) {
       chosenSlot = availableSlots[slotIdx - 1].timeSlot;
-    } else {
-      const match = availableSlots.find(s => text.includes(s.timeSlot) || text.includes(s.timeSlot.split(' ')[0]));
+    } else if (safeText) {
+      const match = availableSlots.find(s => safeText.includes(s.timeSlot) || safeText.includes(s.timeSlot.split(' ')[0]));
       if (match) chosenSlot = match.timeSlot;
     }
 
@@ -377,10 +382,15 @@ function handleConversationalTriage(eventBody) {
     delete session.doctorId;
     delete session.selectedSlot;
 
+    const aptQueue = ingestResult.queueNumber || ingestResult.appointment?.queueNumber || 'A-01';
+    const aptSlot = ingestResult.timeSlot || ingestResult.appointment?.timeSlot || targetSlot;
+    const aptId = ingestResult.appointmentId || ingestResult.appointment?.id;
+    const vnId = ingestResult.voiceNoteId || ingestResult.voiceNote?.id;
+
     const replyText = `✅ *RESERVASI & CURHAT SEMALAM TERKONFIRMASI*\n\n` +
       `🩺 DPJP: *${docObj.fullName}*\n` +
-      `🗓️ Jadwal: *${ingestResult.appointment?.timeSlot || targetSlot} WIB*\n` +
-      `🎫 No. Antrean: *${ingestResult.appointment?.queueNumber || 'A-01'}*\n\n` +
+      `🗓️ Jadwal: *${aptSlot} WIB*\n` +
+      `🎫 No. Antrean: *${aptQueue}*\n\n` +
       `🔒 *Jaminan Privasi UU PDP No. 27/2022:*\n` +
       `Pesan suara Anda telah dienkripsi secara aman dan segera dipelajari DPJP. Rekaman akan otomatis dibersihkan dari server WhatsApp API (< 60s).\n\n` +
       `🧘 *Latihan Relaksasi:*\n` +
@@ -389,20 +399,20 @@ function handleConversationalTriage(eventBody) {
     return {
       status: 'BOOKING_AND_VN_CONFIRMED',
       appointment: {
-        id: ingestResult.appointment?.id,
-        queueNumber: ingestResult.appointment?.queueNumber,
-        timeSlot: ingestResult.appointment?.timeSlot || targetSlot,
+        id: aptId,
+        queueNumber: aptQueue,
+        timeSlot: aptSlot,
         doctor: docObj.fullName
       },
       voiceNote: {
-        id: ingestResult.voiceNote?.id,
-        durationSeconds: ingestResult.voiceNote?.durationSeconds || durationSeconds || 42,
+        id: vnId,
+        durationSeconds: durationSeconds || 42,
         autoPurgeScheduled: '< 60 detik di server WhatsApp API',
         storageEncryption: 'AES-256-GCM / pgcrypto isolated'
       },
       replyMessage: {
         header: '✓ Reservasi Tatap Muka & Curhat Semalam Terkonfirmasi',
-        details: `Jadwal: ${ingestResult.appointment?.timeSlot || targetSlot} WIB bersama ${docObj.fullName} (#Antrean: ${ingestResult.appointment?.queueNumber || 'A-01'})`,
+        details: `Jadwal: ${aptSlot} WIB bersama ${docObj.fullName} (#Antrean: ${aptQueue})`,
         privacyNote: '🔒 Pesan suara Anda telah dienkripsi secara aman dan akan otomatis dihapus dari percakapan WhatsApp demi perlindungan privasi medis Anda.',
         groundingExercise: 'Latihan Relaksasi: Tarik napas 4 detik, hembuskan 4 detik. Istirahatlah malam ini, dokter Anda akan siap menyambut Anda esok pagi.'
       },
@@ -418,6 +428,8 @@ module.exports = {
   META_APP_SECRET,
   WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_TOKEN,
+  conversationSessions,
+  handleConversationalTriage,
   verifyWebhookHandshake,
   verifyWebhookSignature,
   screenForEmergencyCrisis,

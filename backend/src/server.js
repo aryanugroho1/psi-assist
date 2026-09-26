@@ -13,6 +13,11 @@ const {
   verifyWebhookSignature,
   processWhatsAppEvent
 } = require('./whatsapp-service');
+const {
+  initBaileysSocket,
+  getBaileysStatus,
+  logoutBaileys
+} = require('./baileys-service');
 
 const PORT = process.env.PORT || 3000;
 
@@ -222,6 +227,180 @@ const server = http.createServer(async (req, res) => {
 
       const triageResult = await processWhatsAppEvent(parsed);
       return sendJson(res, 200, triageResult);
+    }
+
+    // -------------------------------------------------------------------------
+    // 2.5 BAILEYS SELF-HOSTED WHATSAPP GATEWAY
+    // -------------------------------------------------------------------------
+    if (pathname === '/api/v1/baileys/status' && method === 'GET') {
+      return sendJson(res, 200, { status: 200, ...getBaileysStatus() });
+    }
+
+    if (pathname === '/api/v1/baileys/connect' && method === 'POST') {
+      initBaileysSocket();
+      return sendJson(res, 200, { status: 200, message: 'Inisialisasi koneksi Baileys dimulai.' });
+    }
+
+    if (pathname === '/api/v1/baileys/logout' && method === 'POST') {
+      const result = await logoutBaileys();
+      return sendJson(res, 200, result);
+    }
+
+    if (pathname === '/api/v1/baileys/qr' && method === 'GET') {
+      const bStatus = getBaileysStatus();
+      const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindScribe WhatsApp Gateway Pairing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --border: rgba(255, 255, 255, 0.08);
+      --primary: #10b981;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 0%, #1a2639, var(--bg) 70%);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text);
+      padding: 1.5rem;
+      box-sizing: border-box;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 2.2rem;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    .badge.connected { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge.qr_ready { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge.connecting { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge.disconnected { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .qr-container {
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 16px;
+      display: inline-block;
+      margin: 1.2rem 0;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    .qr-container img {
+      width: 250px;
+      height: 250px;
+      display: block;
+    }
+    .instructions {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-top: 1.2rem;
+    }
+    .instructions ol { margin: 0; padding-left: 1.2rem; }
+    .instructions li { margin-bottom: 0.3rem; }
+    .instructions strong { color: var(--text); }
+    .btn {
+      margin-top: 1rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.15); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot.connected { background: #10b981; box-shadow: 0 0 10px #10b981; }
+    .dot.qr_ready { background: #60a5fa; box-shadow: 0 0 10px #60a5fa; }
+    .dot.connecting { background: #fbbf24; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge ${bStatus.status.toLowerCase()}">
+      <span class="dot ${bStatus.status.toLowerCase()}"></span>
+      Status: ${bStatus.status}
+    </div>
+    
+    <h2 style="margin: 0.2rem 0; font-size: 1.4rem;">WhatsApp Gateway Pairing</h2>
+    <p style="color: var(--muted); font-size: 0.88rem; margin-top: 0.4rem;">MindScribe Psychiatry & Triage Platform</p>
+
+    ${bStatus.status === 'CONNECTED' ? `
+      <div style="padding: 2rem 1rem; color: #10b981;">
+        <svg style="width: 64px; height: 64px; margin-bottom: 1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <h3 style="margin: 0; color: #fff;">Terhubung dengan Sukses!</h3>
+        <p style="color: var(--muted); font-size: 0.95rem; margin-top: 0.5rem;">Nomor Bot: <strong>+${bStatus.connectedPhone || 'WhatsApp'}</strong></p>
+        <p style="font-size: 0.82rem; color: var(--muted);">Bot siap melayani chat & voice note pasien.</p>
+        <form method="POST" action="/api/v1/baileys/logout" style="margin-top: 1.5rem;">
+          <button type="submit" class="btn" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">Putuskan Koneksi (Logout)</button>
+        </form>
+      </div>
+    ` : bStatus.qrDataUrl ? `
+      <div class="qr-container">
+        <img src="${bStatus.qrDataUrl}" alt="WhatsApp QR Code">
+      </div>
+      <div class="instructions">
+        <strong>Langkah Menghubungkan:</strong>
+        <ol>
+          <li>Buka WhatsApp di HP Anda</li>
+          <li>Ketuk menu <strong>(Titik Tiga)</strong> atau <strong>Pengaturan / Settings</strong></li>
+          <li>Pilih <strong>Perangkat Tertaut (Linked Devices)</strong></li>
+          <li>Arahkan kamera ke kode QR di atas</li>
+        </ol>
+      </div>
+      <p style="font-size: 0.75rem; color: var(--muted); margin-top: 0.8rem;">Halaman ini memuat ulang secara otomatis setiap 5 detik.</p>
+      <script>
+        setTimeout(() => location.reload(), 5000);
+      </script>
+    ` : `
+      <div style="padding: 3rem 1rem; color: var(--muted);">
+        <p>Sedang menyiapkan socket Baileys...</p>
+        <script>
+          setTimeout(() => location.reload(), 3000);
+        </script>
+      </div>
+    `}
+  </div>
+</body>
+</html>`;
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(html);
     }
 
     // -------------------------------------------------------------------------
@@ -686,6 +865,9 @@ function stopServer() {
 if (require.main === module) {
   startServer(PORT).then(() => {
     console.log(`[MindScribe Backend] Server listening on http://localhost:${PORT}`);
+    if (process.env.ENABLE_BAILEYS !== 'false') {
+      initBaileysSocket();
+    }
   });
 }
 

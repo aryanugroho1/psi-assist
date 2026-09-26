@@ -302,11 +302,63 @@ class DatabaseStore {
     }
   }
 
+  _ensureDoctorScheduleForDate(doctorId, date) {
+    const targetDoctorId = this._normalizeDoctorId(doctorId);
+    try {
+      const existing = this.sqlite.prepare(`
+        SELECT COUNT(*) as count FROM ops_doctor_schedules WHERE (doctor_id = ? OR doctor_id = ?) AND schedule_date = ?
+      `).get(targetDoctorId, doctorId, date);
+
+      if (existing && existing.count > 0) return;
+
+      const doc = this.getDoctorById(targetDoctorId);
+      if (!doc || !doc.isActive) return;
+
+      const defaultSlots = [
+        '08:30 - 09:00',
+        '09:00 - 09:30',
+        '09:45 - 10:15',
+        '10:30 - 11:00',
+        '11:15 - 11:45',
+        '12:00 - 13:00', // ISHOMA
+        '13:00 - 13:30',
+        '13:30 - 14:00',
+        '14:00 - 14:30',
+        '14:30 - 15:00',
+        '15:00 - 15:30',
+        '15:30 - 16:00'
+      ];
+
+      const insertSlot = this.sqlite.prepare(`
+        INSERT INTO ops_doctor_schedules (id, doctor_id, schedule_date, time_slot, status, patient_name, locked_by_admin)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      defaultSlots.forEach((time, idx) => {
+        const slotId = `sch-${targetDoctorId}-${date}-${idx + 1}-${crypto.randomBytes(2).toString('hex')}`;
+        const isBreak = time.includes('12:00');
+        insertSlot.run(
+          slotId,
+          targetDoctorId,
+          date,
+          time,
+          isBreak ? 'break' : 'available',
+          isBreak ? 'ISHOMA (Istirahat Dokter)' : null,
+          isBreak ? 1 : 0
+        );
+      });
+    } catch (err) {
+      console.warn('[DatabaseStore] _ensureDoctorScheduleForDate warning:', err.message);
+    }
+  }
+
   getAvailableSlots(doctorId, date) {
     const targetDate = date || new Date().toISOString().split('T')[0];
     const targetDoctorId = this._normalizeDoctorId(doctorId);
 
     try {
+      this._ensureDoctorScheduleForDate(targetDoctorId, targetDate);
+
       const stmt = this.sqlite.prepare(`
         SELECT id, doctor_id as doctorId, schedule_date as scheduleDate, time_slot as timeSlot,
                status, patient_name as patientName, locked_by_admin as lockedByAdmin,
@@ -1340,6 +1392,7 @@ class DatabaseStore {
         appointmentId: aptId,
         queueNumber: queueNum,
         overnightLogId: onlId,
+        voiceNoteId: vnId,
         crisisLevel: isCrisis ? 'high' : 'moderate'
       };
     } catch (err) {
