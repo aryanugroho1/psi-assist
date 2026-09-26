@@ -359,6 +359,80 @@ function handleConversationalTriage(eventBody) {
     };
   }
 
+  // 3.5. Step 2.5: Doctor and slot already selected, but patient sends TEXT instead of Voice Note
+  if (effectiveDoctorId && effectiveSlot && !voiceNoteBuffer && type === 'text') {
+    const lower = (text || '').toLowerCase().trim();
+    const isReset = ['batal', 'ulang', 'reset', 'kembali', 'menu', 'konsul kembali', 'konsul lagi', 'awal', 'mulai'].some(kw => lower.includes(kw));
+
+    if (isReset) {
+      delete session.doctorId;
+      delete session.selectedSlot;
+      delete session.step;
+
+      const activeDoctors = db.getActiveDoctors();
+      const doctorListPrompt = activeDoctors.map((d, idx) => `${idx + 1}. *${d.fullName}* (${d.specialization})`).join('\n');
+      const replyText = `🔄 *Pendaftaran Direset*\n\n` +
+        `Silakan pilih kembali Dokter Spesialis Jiwa (Sp.KJ) yang Anda tuju:\n\n${doctorListPrompt}\n\n` +
+        `Ketik nomor dokter atau ceritakan keluhan Anda.`;
+
+      return {
+        status: 'AWAITING_DOCTOR_SELECTION',
+        replyText: replyText
+      };
+    }
+
+    const doctor = db.getDoctorById(effectiveDoctorId) || { fullName: 'Dokter Spesialis' };
+
+    if (lower === 'daftar' || lower === 'lanjut' || lower === 'ya' || lower === 'oke' || lower === 'ok') {
+      const complaintText = session.pendingComplaint || text;
+      const ingestResult = db.ingestWhatsAppCrisisVN({
+        patientPhone: from || '081299881234',
+        patientName: senderName || 'Pasien WhatsApp',
+        doctorId: effectiveDoctorId,
+        timeSlot: effectiveSlot,
+        audioDurationSeconds: 0,
+        rawAudioBuffer: null,
+        transcriptText: `[Keluhan Tertulis Pasien - ${senderName || 'Pasien'}] "${complaintText}"`,
+        anxietyScore: 7,
+        suicideRiskKeywords: riskCheck.matchedKeywords
+      });
+
+      session.step = 'CONFIRMED';
+      delete session.doctorId;
+      delete session.selectedSlot;
+      delete session.pendingComplaint;
+
+      const aptQueue = ingestResult.queueNumber || 'A-01';
+      const replyConfirm = `✅ *RESERVASI KONSULTASI TATAP MUKA TERKONFIRMASI*\n\n` +
+        `🩺 DPJP: *${doctor.fullName}*\n` +
+        `🗓️ Jadwal: *${effectiveSlot} WIB*\n` +
+        `🎫 No. Antrean: *${aptQueue}*\n\n` +
+        `🔒 *Jaminan Privasi UU PDP No. 27/2022:*\n` +
+        `Keluhan tertulis Anda telah tersimpan aman terenkripsi di rekam medis klinik.\n\n` +
+        `Beristirahatlah malam ini, dokter Anda siap menyambut Anda esok pagi di ruang konsultasi.`;
+
+      return {
+        status: 'BOOKING_CONFIRMED_TEXT',
+        replyText: replyConfirm
+      };
+    }
+
+    session.pendingComplaint = text;
+    const replyText = `🩺 Sesi Anda bersama *${doctor.fullName}* (*${effectiveSlot} WIB*) sedang menunggu konfirmasi.\n\n` +
+      `Pesan Anda kami terima:\n_"${text}"_\n\n` +
+      `🎙️ *Pilihan Langkah:*\n` +
+      `1. *Kirim Voice Note (VN)* curhat Anda (Sangat direkomendasikan agar dokter mendengar intonasi suara Anda).\n` +
+      `2. Ketik *DAFTAR* jika ingin mengonfirmasi menggunakan keluhan tertulis di atas.\n` +
+      `3. Ketik *BATAL* untuk mereset dan memilih dokter atau jam lain.`;
+
+    return {
+      status: 'AWAITING_VN_OR_TEXT_CONFIRM',
+      doctorId: effectiveDoctorId,
+      selectedSlot: effectiveSlot,
+      replyText: replyText
+    };
+  }
+
   // 4. Step 3: Voice Note Ingested -> Save to clinical_schema, trigger WhatsApp purge
   if (voiceNoteBuffer || type === 'voice_note') {
     const targetDoctorId = effectiveDoctorId || 'doc-hendra';
@@ -421,7 +495,17 @@ function handleConversationalTriage(eventBody) {
     };
   }
 
-  return { status: 'UNKNOWN_EVENT', message: 'Tipe pesan tidak dikenali.' };
+  // 5. Conversational Safety-Net Fallback (Never leave patient without reply)
+  const activeDocs = db.getActiveDoctors();
+  const doctorListPrompt = activeDocs.map((d, idx) => `${idx + 1}. *${d.fullName}* (${d.specialization})`).join('\n');
+  const fallbackReply = `Halo *${senderName || 'Sahabat'}*, layanan triage krisis & konsultasi MindScribe aktif.\n\n` +
+    `Silakan ketik nomor dokter Spesialis Kedokteran Jiwa (Sp.KJ) yang Anda tuju:\n\n${doctorListPrompt}\n\n` +
+    `Atau ceritakan langsung apa yang sedang Anda rasakan malam ini.`;
+
+  return {
+    status: 'AWAITING_DOCTOR_SELECTION',
+    replyText: fallbackReply
+  };
 }
 
 module.exports = {

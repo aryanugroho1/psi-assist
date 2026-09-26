@@ -166,10 +166,15 @@ async function initBaileysSocket() {
 
     // Inbound Message Listener
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
-      if (type !== 'notify') return;
-
       for (const msg of messages) {
         try {
+          // Ignore outdated historical sync messages (older than 10 minutes)
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          const msgTimestamp = msg.messageTimestamp ? Number(msg.messageTimestamp) : nowSeconds;
+          if (nowSeconds - msgTimestamp > 600) {
+            continue;
+          }
+
           await handleIncomingBaileysMessage(msg);
         } catch (err) {
           console.error('[Baileys] Error handling inbound message:', err);
@@ -202,23 +207,28 @@ async function handleIncomingBaileysMessage(msg) {
   if (processedMessageIds.has(msgId)) return;
   processedMessageIds.set(msgId, Date.now());
 
-  // 3. Extract Sender & Message Type
+  // 3. Extract Sender & Message Type (Unwrap ephemeral & viewOnce containers)
   const senderPhone = remoteJid.replace('@s.whatsapp.net', '');
   const senderName = msg.pushName || 'Pasien WhatsApp';
+
+  let m = msg.message;
+  while (m?.ephemeralMessage?.message || m?.viewOnceMessage?.message || m?.viewOnceMessageV2?.message || m?.documentWithCaptionMessage?.message) {
+    m = m.ephemeralMessage?.message || m.viewOnceMessage?.message || m.viewOnceMessageV2?.message || m.documentWithCaptionMessage?.message;
+  }
 
   let msgText = '';
   let msgType = 'text';
   let audioBuffer = null;
   let audioDuration = 40;
 
-  if (msg.message.conversation) {
-    msgText = msg.message.conversation.trim();
-  } else if (msg.message.extendedTextMessage?.text) {
-    msgText = msg.message.extendedTextMessage.text.trim();
-  } else if (msg.message.audioMessage) {
+  if (m?.conversation) {
+    msgText = m.conversation.trim();
+  } else if (m?.extendedTextMessage?.text) {
+    msgText = m.extendedTextMessage.text.trim();
+  } else if (m?.audioMessage) {
     msgType = 'voice_note';
     msgText = 'Pesan Suara (Voice Note)';
-    audioDuration = msg.message.audioMessage.seconds || 35;
+    audioDuration = m.audioMessage.seconds || 35;
     try {
       console.log(`[Baileys] Mengunduh audio Voice Note dari pasien ${senderPhone}...`);
       audioBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger });
@@ -226,7 +236,6 @@ async function handleIncomingBaileysMessage(msg) {
       console.error('[Baileys] Gagal mengunduh audio buffer:', downloadErr.message);
     }
   } else {
-    // Unhandled type (image/sticker) -> polite prompt
     msgText = 'Halo';
   }
 
