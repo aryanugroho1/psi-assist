@@ -220,7 +220,7 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      const triageResult = processWhatsAppEvent(parsed);
+      const triageResult = await processWhatsAppEvent(parsed);
       return sendJson(res, 200, triageResult);
     }
 
