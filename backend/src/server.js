@@ -16,7 +16,8 @@ const {
 const {
   initBaileysSocket,
   getBaileysStatus,
-  logoutBaileys
+  logoutBaileys,
+  purgeChatMedia
 } = require('./baileys-service');
 
 const PORT = process.env.PORT || 3000;
@@ -246,6 +247,16 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, result);
     }
 
+    if (pathname === '/api/v1/baileys/purge-chat' && method === 'POST') {
+      const body = await parseJsonBody(req);
+      const phone = body.phone || req.url.split('phone=')[1];
+      if (!phone) {
+        return sendJson(res, 400, { status: 400, error: 'Nomor telepon pasien diperlukan (field: phone).' });
+      }
+      const result = await purgeChatMedia(phone);
+      return sendJson(res, result.success ? 200 : 500, result);
+    }
+
     if ((pathname === '/api/v1/baileys/qr' || pathname === '/api/v1/baileys' || pathname === '/api/v1/baileys/' || pathname === '/wa' || pathname === '/whatsapp') && method === 'GET') {
       const bStatus = getBaileysStatus();
       const html = `<!DOCTYPE html>
@@ -366,7 +377,38 @@ const server = http.createServer(async (req, res) => {
         <svg style="width: 64px; height: 64px; margin-bottom: 1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         <h3 style="margin: 0; color: #fff;">Terhubung dengan Sukses!</h3>
         <p style="color: var(--muted); font-size: 0.95rem; margin-top: 0.5rem;">Nomor Bot: <strong>+${bStatus.connectedPhone || 'WhatsApp'}</strong></p>
-        <p style="font-size: 0.82rem; color: var(--muted);">Bot siap melayani chat & voice note pasien.</p>
+        <div style="margin-top: 1.5rem; padding: 1rem; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); text-align: left;">
+          <h4 style="margin: 0 0 0.4rem 0; font-size: 0.9rem; color: #fff;">🧹 Bersihkan Media & Chat Hotline (Zero Data Retention)</h4>
+          <p style="font-size: 0.78rem; color: var(--muted); margin: 0 0 0.8rem 0;">Hapus semua riwayat audio/teks pasien tertentu dari HP hotline demi kepatuhan UU PDP No. 27/2022.</p>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="purgePhone" placeholder="Contoh: 08123456789" style="flex: 1; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); color: #fff; font-size: 0.85rem;" />
+            <button type="button" onclick="purgeChat()" style="background: #0284c7; color: #fff; border: none; border-radius: 6px; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Bersihkan</button>
+          </div>
+          <div id="purgeStatus" style="margin-top: 0.5rem; font-size: 0.8rem;"></div>
+        </div>
+        <script>
+          async function purgeChat() {
+            const p = document.getElementById('purgePhone').value.trim();
+            const statusEl = document.getElementById('purgeStatus');
+            if (!p) { statusEl.innerHTML = '<span style="color:#f87171;">Masukkan nomor telepon</span>'; return; }
+            statusEl.innerHTML = '<span style="color:#94a3b8;">Sedang membersihkan chat hotline...</span>';
+            try {
+              const res = await fetch('/api/v1/baileys/purge-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: p })
+              });
+              const json = await res.json();
+              if (res.ok && json.success) {
+                statusEl.innerHTML = '<span style="color:#10b981;">✓ ' + json.message + '</span>';
+              } else {
+                statusEl.innerHTML = '<span style="color:#f87171;">Gagal: ' + (json.error || json.message) + '</span>';
+              }
+            } catch (e) {
+              statusEl.innerHTML = '<span style="color:#f87171;">Error: ' + e.message + '</span>';
+            }
+          }
+        </script>
         <form method="POST" action="/api/v1/baileys/logout" style="margin-top: 1.5rem;">
           <button type="submit" class="btn" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">Putuskan Koneksi (Logout)</button>
         </form>

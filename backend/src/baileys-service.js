@@ -257,8 +257,9 @@ async function handleIncomingBaileysMessage(msg) {
       const jitterMs = 1500 + Math.floor(Math.random() * 1000);
       await sleep(jitterMs);
 
-      // Send the clinical triage response
-      await sock.sendMessage(remoteJid, { text: triageResult.replyText }, { quoted: msg });
+      // Send the clinical triage response (do NOT quote VN to avoid leaving audio preview in quote bubble)
+      const sendOptions = msgType === 'voice_note' ? {} : { quoted: msg };
+      await sock.sendMessage(remoteJid, { text: triageResult.replyText }, sendOptions);
       
       // Clear typing indicator
       await sock.sendPresenceUpdate('paused', remoteJid);
@@ -267,6 +268,49 @@ async function handleIncomingBaileysMessage(msg) {
     } catch (sendErr) {
       console.error(`[Baileys Outbound] Failed to send reply to ${remoteJid}:`, sendErr.message);
     }
+  }
+
+  // 7. Auto-Purge Voice Note from WhatsApp Hotline (UU PDP No. 27/2022 & Medical Confidentiality)
+  if (msgType === 'voice_note' && sock) {
+    try {
+      console.log(`[Baileys Privacy Purge] Menghapus Voice Note ${msg.key.id} dari hotline WhatsApp...`);
+
+      // 7.1 Immediate deleteMessageForMe with deleteMedia: true on hotline device
+      await sock.chatModify({
+        deleteForMe: {
+          timestamp: msg.messageTimestamp || Math.floor(Date.now() / 1000),
+          key: msg.key,
+          deleteMedia: true
+        }
+      }, remoteJid);
+
+      // 7.2 Secondary protocol-level delete attempt
+      try {
+        await sock.sendMessage(remoteJid, { delete: msg.key });
+      } catch (_) {}
+
+      console.log(`[Baileys Privacy Purge] ✅ Sukses! Voice Note ${msg.key.id} terhapus dari perangkat WhatsApp hotline.`);
+    } catch (purgeErr) {
+      console.error('[Baileys Privacy Purge] Peringatan saat purge VN dari hotline:', purgeErr.message);
+    }
+  }
+}
+
+/**
+ * Purge / clear chat and media for a specific phone number or chat from hotline device
+ */
+async function purgeChatMedia(targetPhone) {
+  if (!sock) return { success: false, message: 'WhatsApp socket tidak terhubung.' };
+  try {
+    const cleanPhone = String(targetPhone).replace(/[^0-9]/g, '');
+    const jid = `${cleanPhone}@s.whatsapp.net`;
+    await sock.chatModify({
+      clear: true,
+      lastMessages: []
+    }, jid);
+    return { success: true, message: `Chat dan media untuk +${cleanPhone} berhasil dibersihkan dari hotline WhatsApp.` };
+  } catch (err) {
+    return { success: false, message: `Gagal membersihkan chat hotline: ${err.message}` };
   }
 }
 
@@ -306,5 +350,6 @@ module.exports = {
   initBaileysSocket,
   getBaileysStatus,
   logoutBaileys,
-  handleIncomingBaileysMessage
+  handleIncomingBaileysMessage,
+  purgeChatMedia
 };

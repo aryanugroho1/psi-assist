@@ -391,10 +391,11 @@ function handleConversationalTriage(eventBody) {
       `🩺 DPJP: *${docObj.fullName}*\n` +
       `🗓️ Jadwal: *${aptSlot} WIB*\n` +
       `🎫 No. Antrean: *${aptQueue}*\n\n` +
-      `🔒 *Jaminan Privasi UU PDP No. 27/2022:*\n` +
-      `Pesan suara Anda telah dienkripsi secara aman dan segera dipelajari DPJP. Rekaman akan otomatis dibersihkan dari server WhatsApp API (< 60s).\n\n` +
+      `🔒 *Jaminan Privasi Medis (UU PDP No. 27/2022):*\n` +
+      `Rekaman suara Anda telah tersimpan terenkripsi (AES-256) di server klinik dan otomatis dihapus/dibersihkan dari perangkat WhatsApp hotline kami demi kerahasiaan medis Anda.\n\n` +
+      `_Tips Privasi: Anda juga dapat menekan "Hapus untuk Semua Orang" di WhatsApp HP Anda jika ingin menghapus salinan pesan ini dari riwayat chat pribadi Anda._\n\n` +
       `🧘 *Latihan Relaksasi:*\n` +
-      `Tarik napas 4 detik, hembuskan 4 detik. Beristirahatlah malam ini, dokter Anda siap menyambut Anda esok pagi di ruang konsultasi.`;
+      `Tarik napas 4 detik, tahan 2 detik, lalu hembuskan perlahan 4 detik. Beristirahatlah malam ini, dokter Anda siap menyambut Anda esok pagi di ruang konsultasi.`;
 
     return {
       status: 'BOOKING_AND_VN_CONFIRMED',
