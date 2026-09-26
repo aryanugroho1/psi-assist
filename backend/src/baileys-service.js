@@ -19,6 +19,7 @@ const {
   useMultiFileAuthState,
   DisconnectReason,
   downloadMediaMessage,
+  downloadContentFromMessage,
   fetchLatestBaileysVersion
 } = require('@whiskeysockets/baileys');
 
@@ -231,7 +232,25 @@ async function handleIncomingBaileysMessage(msg) {
     audioDuration = m.audioMessage.seconds || 35;
     try {
       console.log(`[Baileys] Mengunduh audio Voice Note dari pasien ${senderPhone}...`);
-      audioBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger });
+      
+      // Layer 1: Direct stream download from unwrapped audio message
+      try {
+        const stream = await downloadContentFromMessage(m.audioMessage, 'audio');
+        const chunks = [];
+        for await (const chunk of stream) {
+          chunks.push(chunk);
+        }
+        audioBuffer = Buffer.concat(chunks);
+      } catch (directErr) {
+        console.warn('[Baileys] downloadContentFromMessage direct download error:', directErr.message);
+      }
+
+      // Layer 2: Fallback to downloadMediaMessage if Layer 1 was empty
+      if (!audioBuffer || audioBuffer.length === 0) {
+        audioBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger });
+      }
+
+      console.log(`[Baileys] Audio Voice Note berhasil diunduh (${audioBuffer ? audioBuffer.length : 0} bytes)`);
     } catch (downloadErr) {
       console.error('[Baileys] Gagal mengunduh audio buffer:', downloadErr.message);
     }

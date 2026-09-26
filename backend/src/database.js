@@ -1186,9 +1186,9 @@ class DatabaseStore {
     }
   }
 
-  _generateValidWavBuffer(durationSeconds = 5, freq = 432) {
+  _generateValidWavBuffer(durationSeconds = 5) {
     const sampleRate = 22050;
-    const dur = Math.max(3, Math.min(durationSeconds, 15));
+    const dur = Math.max(3, Math.min(durationSeconds, 8));
     const numSamples = Math.floor(sampleRate * dur);
     const dataSize = numSamples * 2;
     const buffer = Buffer.alloc(44 + dataSize);
@@ -1207,13 +1207,16 @@ class DatabaseStore {
     buffer.write('data', 36);
     buffer.writeUInt32LE(dataSize, 40);
 
+    // Calm therapeutic acoustic harmonic chime progression (528Hz & 660Hz with soft exponential decay)
     for (let i = 0; i < numSamples; i++) {
       const t = i / sampleRate;
-      let envelope = 1;
-      if (i < 2000) envelope = i / 2000;
-      else if (i > numSamples - 2000) envelope = (numSamples - i) / 2000;
-      const sample = Math.sin(2 * Math.PI * freq * t) * 0.3 * envelope;
-      buffer.writeInt16LE(Math.floor(sample * 32767), 44 + i * 2);
+      const noteIdx = Math.floor(t / 1.5);
+      const noteFreq = noteIdx === 0 ? 528 : (noteIdx === 1 ? 660 : 792);
+      const noteT = t % 1.5;
+      const decay = Math.exp(-2.2 * noteT);
+      const wave = Math.sin(2 * Math.PI * noteFreq * noteT) * 0.22 * decay
+                 + Math.sin(2 * Math.PI * (noteFreq * 2) * noteT) * 0.06 * decay;
+      buffer.writeInt16LE(Math.floor(wave * 32767), 44 + i * 2);
     }
     return buffer;
   }
